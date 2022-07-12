@@ -68,9 +68,9 @@ export default function Login() {
 
           {smUp && (
             <Typography variant="body2" sx={{ mt: { md: -2 } }}>
-              Don’t have an account? {''}
+              Vous n'avez pas de compte ? {''}
               <Link variant="subtitle2" component={RouterLink} to="/register">
-                Get started
+                inscrvez-vous
               </Link>
             </Typography>
           )}
@@ -79,7 +79,7 @@ export default function Login() {
         {mdUp && (
           <SectionStyle>
             <Typography variant="h3" sx={{ px: 5, mt: 10, mb: 5 }}>
-              Hi, Welcome Back
+              Connectez vous
             </Typography>
             <img src="/static/illustrations/illustration_login.png" alt="login" />
           </SectionStyle>
@@ -88,10 +88,10 @@ export default function Login() {
         <Container maxWidth="sm">
           <ContentStyle>
             <Typography variant="h4" gutterBottom>
-              Sign in to Minimal
+              Entrez vos identifiants ci-dessous !
             </Typography>
 
-            <Typography sx={{ color: 'text.secondary', mb: 5 }}>Enter your details below.</Typography>
+            <Typography sx={{ color: 'text.secondary', mb: 5 }}>Profitez de toutes nos fonctionnalites</Typography>
 
             <LoginForm />
 

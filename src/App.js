@@ -1,15 +1,12 @@
 import {SnackbarProvider} from 'notistack'
-import {useDispatch, useSelector} from "react-redux";
-import {useEffect, useState} from "react";
+import { useSelector} from "react-redux";
 import Router from './routes';
 // theme
 import ThemeProvider from './theme';
 // components
 import ScrollToTop from './components/ScrollToTop';
 import {BaseOptionChartStyle} from './components/chart/BaseOptionChart';
-import {isConnected, loadUser} from "./store/user";
-import {get} from "./http/request";
-import Loader from "./components/Loader";
+import {isConnected} from "./store/user";
 
 // ----------------------------------------------------------------------
 
@@ -21,7 +18,7 @@ export default function App() {
             <ScrollToTop/>
             <BaseOptionChartStyle/>
             <SnackbarProvider
-                maxSnack={3}
+                maxSnack={10}
                 anchorOrigin={{
                     vertical: 'top',
                     horizontal: 'right',

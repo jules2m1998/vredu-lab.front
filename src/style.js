@@ -23,3 +23,11 @@ export const HeaderStyle = styled('header')(({ theme }) => ({
     padding: theme.spacing(7, 5, 0, 7),
   },
 }));
+
+export const ContentStyle = styled('div')(({ theme }) => ({
+  maxWidth: 480,
+  margin: 'auto',
+  display: 'flex',
+  justifyContent: 'center',
+  flexDirection: 'column',
+}));

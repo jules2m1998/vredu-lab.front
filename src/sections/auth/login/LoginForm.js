@@ -52,14 +52,11 @@ export default function LoginForm() {
         formData.append("Username", e.username)
         formData.append("Password", e.password)
 
-        const errorMsg = [
-            {
-                status: 401,
-                msg: "Nom d'utilisateur ou mot de passe errone veillez verifier vos informations"
-            }
-        ]
-
-        const data = await post("/Auth/login", formData, enqueueSnackbar, errorMsg, "Bienvenu !")
+        const data = await post("/Auth/login", {
+            form: formData,
+            snack: enqueueSnackbar,
+            msg: "Bienvenu"
+        })
         if (data) {
             dispatch(login(data.token))
             const user = await get("/Auth/user")
@@ -90,18 +87,11 @@ export default function LoginForm() {
                         ),
                     }}
                 />
-            </Stack>
 
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{my: 2}}>
-                <RHFCheckbox name="remember" label="Remember me"/>
-                <Link variant="subtitle2" underline="hover">
-                    Forgot password?
-                </Link>
+                <LoadingButton fullWidth size="large" type="submit" variant="contained" loading={isSubmitting}>
+                    Connexion
+                </LoadingButton>
             </Stack>
-
-            <LoadingButton fullWidth size="large" type="submit" variant="contained" loading={isSubmitting}>
-                Login
-            </LoadingButton>
         </FormProvider>
     );
 }

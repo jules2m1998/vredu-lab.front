@@ -10,6 +10,7 @@ import NotFound from './pages/Page404';
 import Register from './pages/Register';
 import Products from './pages/Products';
 import DashboardApp from './pages/DashboardApp';
+import UserForm from "./pages/UserForm";
 
 // ----------------------------------------------------------------------
 
@@ -20,7 +21,9 @@ export default function Router({isLogIn = false}) {
       element: isLogIn ? <DashboardLayout /> : <Navigate to="/login" />,
       children: [
         { path: 'app', element: <DashboardApp /> },
-        { path: 'user', element: <User /> },
+        { path: 'user/list', element: <User /> },
+        { path: 'user/form', element: <UserForm /> },
+        { path: 'user/form/:id', element: <UserForm /> },
         { path: 'products', element: <Products /> },
         { path: 'blog', element: <Blog /> },
         { path: '', element: <Navigate to="/dashboard/app" /> },

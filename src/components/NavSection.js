@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink as RouterLink, matchPath, useLocation } from 'react-router-dom';
+import {useSelector} from "react-redux";
 // material
 import { alpha, useTheme, styled } from '@mui/material/styles';
 import { Box, List, Collapse, ListItemText, ListItemIcon, ListItemButton } from '@mui/material';
 //
 import Iconify from './Iconify';
+import {connectedUser} from "../store/user";
 
 // ----------------------------------------------------------------------
 
@@ -141,6 +143,7 @@ NavSection.propTypes = {
 
 export default function NavSection({ navConfig, ...other }) {
   const { pathname } = useLocation();
+  const user = useSelector(connectedUser);
 
   const match = (path) => (path ? !!matchPath({ path, end: false }, pathname) : false);
 
@@ -148,7 +151,7 @@ export default function NavSection({ navConfig, ...other }) {
     <Box {...other}>
       <List disablePadding sx={{ p: 1 }}>
         {navConfig.map((item) => (
-          <NavItem key={item.title} item={item} active={match} />
+          (!item.admin || (item.admin && user.isAdmin)) && <NavItem key={item.title} item={item} active={match} />
         ))}
       </List>
     </Box>

@@ -46,9 +46,9 @@ export default function Register() {
           <Logo />
           {smUp && (
             <Typography variant="body2" sx={{ mt: { md: -2 } }}>
-              Already have an account? {''}
+              Vous avez deja un compte ? {''}
               <Link variant="subtitle2" component={RouterLink} to="/login">
-                Login
+                Connectez-vous
               </Link>
             </Typography>
           )}
@@ -57,7 +57,7 @@ export default function Register() {
         {mdUp && (
           <SectionStyle>
             <Typography variant="h3" sx={{ px: 5, mt: 10, mb: 5 }}>
-              Manage the job more effectively with Minimal
+              Creez votre compte
             </Typography>
             <img alt="register" src="/static/illustrations/illustration_register.png" />
           </SectionStyle>
@@ -66,30 +66,18 @@ export default function Register() {
         <Container>
           <ContentStyle>
             <Typography variant="h4" gutterBottom>
-              Get started absolutely free.
+              Enregistrez vos informations personnelles
             </Typography>
 
-            <Typography sx={{ color: 'text.secondary', mb: 5 }}>Free forever. No credit card needed.</Typography>
+            <Typography sx={{ color: 'text.secondary', mb: 5 }}>Commencer ici pour la creation des reactions</Typography>
 
             <RegisterForm />
 
-            <Typography variant="body2" align="center" sx={{ color: 'text.secondary', mt: 3 }}>
-              By registering, I agree to Minimal&nbsp;
-              <Link underline="always" color="text.primary" href="#">
-                Terms of Service
-              </Link>
-              {''}and{''}
-              <Link underline="always" color="text.primary" href="#">
-                Privacy Policy
-              </Link>
-              .
-            </Typography>
-
             {!smUp && (
               <Typography variant="body2" sx={{ mt: 3, textAlign: 'center' }}>
-                Already have an account?{' '}
+                Vous avez deja un compte ?{' '}
                 <Link variant="subtitle2" to="/login" component={RouterLink}>
-                  Login
+                  Connectez-vous
                 </Link>
               </Typography>
             )}

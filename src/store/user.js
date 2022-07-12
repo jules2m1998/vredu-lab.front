@@ -50,5 +50,6 @@ export const counterSlice = createSlice({
 export const {loadUser, logout, loginFailed, login} = counterSlice.actions
 
 export const isConnected = state => state.auth.connected
+export const connectedUser = state => state.auth.user
 
 export default counterSlice.reducer
