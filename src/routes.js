@@ -13,16 +13,17 @@ import DashboardApp from './pages/DashboardApp';
 
 // ----------------------------------------------------------------------
 
-export default function Router() {
+export default function Router({isLogIn = false}) {
   return useRoutes([
     {
       path: '/dashboard',
-      element: <DashboardLayout />,
+      element: isLogIn ? <DashboardLayout /> : <Navigate to="/login" />,
       children: [
         { path: 'app', element: <DashboardApp /> },
         { path: 'user', element: <User /> },
         { path: 'products', element: <Products /> },
         { path: 'blog', element: <Blog /> },
+        { path: '', element: <Navigate to="/dashboard/app" /> },
       ],
     },
     {
