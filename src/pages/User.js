@@ -1,9 +1,7 @@
 import {filter} from 'lodash';
 import {sentenceCase} from 'change-case';
-import {useEffect, useState} from 'react';
+import {useCallback, useContext, useEffect, useState} from 'react';
 import {Link as RouterLink} from 'react-router-dom';
-import {useSnackbar} from "notistack";
-import {useDispatch} from "react-redux";
 // material
 import {
     Card,
@@ -30,8 +28,7 @@ import {UserListHead, UserListToolbar, UserMoreMenu} from '../sections/@dashboar
 // mock
 import USERLIST from '../_mock/user';
 import Loader from "../components/Loader";
-import {get} from "../http/request";
-import {logout} from "../store/user";
+import {RequestContext} from "../http/RequestProvider";
 
 // ----------------------------------------------------------------------
 
@@ -79,6 +76,7 @@ export default function User() {
     const [page, setPage] = useState(0);
 
     const [isloading, setloading] = useState(false);
+    const [isSetLoading, setSetLoader] = useState(false);
     const [users, setUser] = useState([])
 
     const [order, setOrder] = useState('asc');
@@ -90,19 +88,37 @@ export default function User() {
     const [filterName, setFilterName] = useState('');
 
     const [rowsPerPage, setRowsPerPage] = useState(5);
-    const {enqueueSnackbar} = useSnackbar()
-    const dispatch = useDispatch()
+    const request = useContext(RequestContext)
+
+    const toggleState = useCallback(async (id, isActivated, msg = 'utilisateur modifie avec succes !') => {
+        if (msg) setSetLoader(true)
+        const formData = new FormData()
+        formData.append("IsActivated", `${!isActivated}`)
+        formData.append("Id", id)
+        const data = await request.fetch('/User/Admin', {
+            method: "put",
+            body: formData,
+            successMsg: msg
+        })
+        setUser(us => [...us.filter(value => value.id !== id), data])
+        if (msg) setSetLoader(false)
+    }, [request])
+
+    const onSetMultiple = useCallback(async (e) => {
+        setSetLoader(true)
+        await Promise.all(selected.map(async (id) => {
+            await toggleState(id, e, null)
+        }))
+        setSetLoader(false)
+    }, [selected, toggleState])
 
     useEffect(() => {
         setloading(true);
-        get("/User", {
-            snack: enqueueSnackbar,
-            handleUnauthorized: () => {dispatch(logout())}
-        }).then(value => {
+        request.fetch("/User").then(value => {
             if (value) setUser(value)
             setloading(false)
         })
-    }, [enqueueSnackbar])
+    }, [request])
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -112,7 +128,7 @@ export default function User() {
 
     const handleSelectAllClick = (event) => {
         if (event.target.checked) {
-            const newSelecteds = users.map((n) => n.userName);
+            const newSelecteds = users.map((n) => n.id);
             setSelected(newSelecteds);
             return;
         }
@@ -161,17 +177,22 @@ export default function User() {
                     <Typography variant="h4" gutterBottom>
                         Liste des utilisateur
                     </Typography>
-                    <Button disabled={isloading} variant="contained" component={RouterLink} to="#"
+                    <Button disabled={isloading} variant="contained" component={RouterLink} to="/dashboard/user/form"
                             startIcon={<Iconify icon="eva:plus-fill"/>}>
                         Nouvelle utilsateur
                     </Button>
                 </Stack>
 
                 <Card>
-                    <UserListToolbar placeholder="Recherchez un utilsateur..." isLoading={isloading} numSelected={selected.length} filterName={filterName}
-                                     onFilterName={handleFilterByName}/>
+                    <UserListToolbar
+                        placeholder="Recherchez un utilsateur..."
+                        isLoading={isloading}
+                        numSelected={selected.length}
+                        filterName={filterName} onFilterName={handleFilterByName}
+                        onSetMultiple={onSetMultiple}
+                    />
 
-                    {isloading && <Loader text='Chargement des utilisateurs...' />}
+                    {isloading && <Loader text='Chargement des utilisateurs...'/>}
 
                     {!isloading && <>
                         <Scrollbar>
@@ -188,8 +209,17 @@ export default function User() {
                                     />
                                     <TableBody>
                                         {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                                            const {id, userName, firstName, lastName, email, phoneNumber, avatarUrl, isActivated} = row;
-                                            const isItemSelected = selected.indexOf(userName) !== -1;
+                                            const {
+                                                id,
+                                                userName,
+                                                firstName,
+                                                lastName,
+                                                email,
+                                                phoneNumber,
+                                                avatarUrl,
+                                                isActivated
+                                            } = row;
+                                            const isItemSelected = selected.indexOf(id) !== -1;
 
                                             return (
                                                 <TableRow
@@ -202,7 +232,7 @@ export default function User() {
                                                 >
                                                     <TableCell padding="checkbox">
                                                         <Checkbox checked={isItemSelected}
-                                                                  onChange={(event) => handleClick(event, userName)}/>
+                                                                  onChange={(event) => handleClick(event, id)} disabled={isSetLoading}/>
                                                     </TableCell>
                                                     <TableCell component="th" scope="row" padding="none">
                                                         <Stack direction="row" alignItems="center" spacing={2}>
@@ -212,18 +242,20 @@ export default function User() {
                                                             </Typography>
                                                         </Stack>
                                                     </TableCell>
-                                                    <TableCell align="left">{firstName} {lastName.toUpperCase()}</TableCell>
+                                                    <TableCell
+                                                        align="left">{firstName} {lastName.toUpperCase()}</TableCell>
                                                     <TableCell align="left">{email}</TableCell>
                                                     <TableCell align="left">{phoneNumber}</TableCell>
                                                     <TableCell align="left">
                                                         <Label variant="ghost"
-                                                               color={ isActivated ?'success' :  'error'}>
+                                                               color={isActivated ? 'success' : 'error'}>
                                                             {sentenceCase(isActivated ? 'Actif' : "desactive")}
                                                         </Label>
                                                     </TableCell>
 
                                                     <TableCell align="right">
-                                                        <UserMoreMenu/>
+                                                        <UserMoreMenu id={id} isActivated={isActivated}
+                                                                      toggleState={toggleState}/>
                                                     </TableCell>
                                                 </TableRow>
                                             );

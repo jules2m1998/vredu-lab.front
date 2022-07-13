@@ -1,5 +1,5 @@
 import * as Yup from 'yup';
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useContext, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {useSnackbar} from "notistack";
 import {useDispatch} from "react-redux";
@@ -14,70 +14,49 @@ import {LoadingButton} from '@mui/lab';
 import Iconify from '../../../components/Iconify';
 import {FormProvider, RHFTextField} from '../../../components/hook-form';
 import {RHFSelect} from "../../../components/hook-form/RHFSelect";
-import {post} from "../../../http/request";
 import {logout} from "../../../store/user";
+import {RequestContext} from "../../../http/RequestProvider";
 
 // ----------------------------------------------------------------------
 
 RegisterForm.propTypes = {
     isAdmin: PropTypes.bool,
-    user: PropTypes.object
+    user: PropTypes.object,
+    id: PropTypes.number,
+    handleUpdate: PropTypes.func
 };
 
-function formatDate(date) {
-    const d = new Date(date);
-    let month = `${d.getMonth() + 1}`;
-    let day = `${d.getDate()}`;
-    const year = d.getFullYear();
-
-    if (month.length < 2)
-        month = `0${month}`;
-    if (day.length < 2)
-        day = `0${day}`;
-
-    return [year, month, day].join('-');
-}
-
 const defaultUser = {
-    firstName: '',
-    lastName: '',
-    email: '',
+    username: '',
     password: '',
-    birthday: "",
-    username: "",
-    phone_number: "",
-    sex: 0,
+    lastname: '',
+    firstname: "",
+    email: "",
+    phoneNumber: "",
+    birthDate: "",
+    sex: 0
 }
 
-export default function RegisterForm({isAdmin = false, user = defaultUser}) {
-    const {firstName, lastName, email, password, birthday, username, sex} = user
+export default function RegisterForm({isAdmin = false, user = defaultUser, id, handleUpdate}) {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const request = useContext(RequestContext)
 
     const [showPassword, setShowPassword] = useState(false);
     const {enqueueSnackbar} = useSnackbar()
 
-    const [defaultValues] = useState({
-        firstName,
-        lastName,
-        email,
-        password,
-        birthday: formatDate(birthday),
-        username,
-        "phone_number": user.phone_number,
-        sex
-    });
+    const defaultValues = useMemo(() => user, [user]);
 
     const isIdentity = useCallback(() => JSON.stringify(defaultValues) === JSON.stringify(defaultUser), [defaultValues])
 
     const RegisterSchema = Yup.object().shape({
         firstName: Yup.string().required('Le prenom est obligatoire'),
-        username: Yup.string().required('Le prenom est obligatoire'),
+        userName: Yup.string().required('Le prenom est obligatoire'),
         lastName: Yup.string().required('Le nom est obligatoire'),
         email: Yup.string().email('L\'adresse email doit etre valide !').required('\'adresse email est obligatoire'),
-        phone_number: Yup.string().required('Numero de telephone obligatoire !'),
+        phoneNumber: Yup.string().required('Numero de telephone obligatoire !'),
         sex: Yup.string().required('Le mot de passe est obligatoire'),
-        birthday: Yup.string().required('Le mot de passe est obligatoire'),
+        birthDate: Yup.string().required('Le mot de passe est obligatoire'),
         password: Yup.string().required('Le mot de passe est obligatoire'),
     });
 
@@ -98,21 +77,14 @@ export default function RegisterForm({isAdmin = false, user = defaultUser}) {
     const onSubmit = useCallback(async (e) => {
         const formData = new FormData()
         if (isIdentity()) {
-            formData.append("lastname", e.lastName)
-            formData.append("sex", e.sex)
-            formData.append("birthDate", e.birthday)
-            formData.append("username", e.username)
-            formData.append("phoneNumber", e.phone_number)
-            formData.append("firstname", e.firstName)
-            formData.append("password", e.password)
-            formData.append("email", e.email)
+            Object.entries(e).forEach(([k, v]) => formData.append(k,v))
 
-            const data = await post("/Auth/register", {
-                form: formData,
-                snack: enqueueSnackbar,
-                msg: "Compte cree avec success !",
-                handleUnauthorized: () => dispatch(logout())
+            const data = await request.fetch("/Auth/register", {
+                method: 'post',
+                body: formData,
+                successMsg: isAdmin ? "Utilsateur cree !" : 'votre compte a bien ete cree veillez vous connecter !'
             })
+
             if (data) {
                 if (!isAdmin) {
                     dispatch(logout())
@@ -121,16 +93,33 @@ export default function RegisterForm({isAdmin = false, user = defaultUser}) {
                 }
             }
         } else {
-            const oldUser = Object.keys(e).reduce((previousValue, currentValue) => {
-                if(defaultValues[currentValue] !== e[currentValue]) return {
+            const updated = Object.keys(e).reduce((previousValue, currentValue) => {
+                const def = typeof defaultValues[currentValue] === 'string' ? defaultValues[currentValue].trim() : defaultValues[currentValue]
+                const ef = typeof e[currentValue] === 'string' ? e[currentValue].trim() : e[currentValue]
+                if(def !== ef) return {
                     ...previousValue,
-                    [currentValue]: e[currentValue]
+                    [currentValue === 'password' ? "NewPassword" : currentValue.charAt(0).toUpperCase() + currentValue.slice(1)]: ef
                 }
                 return {...previousValue}
             }, {})
-            console.log(oldUser)
+            console.log(updated)
+            if (!Object.keys(updated).length){
+                enqueueSnackbar("Aucune information modifiee dans le formulaire !", {variant: 'warning'})
+            } else {
+                Object.entries(updated).forEach(([k, v]) => formData.append(k,v))
+                formData.append("Id", id)
+                const data = await request.fetch('/User/Admin', {
+                    method: "put",
+                    body: formData,
+                    successMsg: 'utilisateur modifie avec succes !'
+                })
+                if (data){
+                    handleUpdate(data)
+                    navigate("/dashboard/user/list")
+                }
+            }
         }
-    }, [defaultValues, dispatch, enqueueSnackbar, isAdmin, isIdentity, methods, navigate])
+    }, [defaultValues, dispatch, enqueueSnackbar, handleUpdate, id, isAdmin, isIdentity, methods, navigate, request])
 
     return (
         <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
@@ -140,11 +129,11 @@ export default function RegisterForm({isAdmin = false, user = defaultUser}) {
                     <RHFTextField name="lastName" label="Last name"/>
                 </Stack>
 
-                <RHFTextField name="username" label="Nom d'utilisateur"/>
+                <RHFTextField name="userName" label="Nom d'utilisateur"/>
                 <RHFTextField name="email" label="Adresse email"/>
-                <RHFTextField name="phone_number" label="Numero de telephone"/>
+                <RHFTextField name="phoneNumber" label="Numero de telephone"/>
                 <RHFTextField
-                    name="birthday"
+                    name="birthDate"
                     id="date"
                     label="Date de naissance"
                     type="date"

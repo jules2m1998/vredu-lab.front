@@ -7,8 +7,10 @@ import ThemeProvider from './theme';
 import ScrollToTop from './components/ScrollToTop';
 import {BaseOptionChartStyle} from './components/chart/BaseOptionChart';
 import {isConnected} from "./store/user";
+import RequestProvider from "./http/RequestProvider";
 
 // ----------------------------------------------------------------------
+
 
 export default function App() {
     const connect = useSelector(isConnected);
@@ -24,7 +26,9 @@ export default function App() {
                     horizontal: 'right',
                 }}
             >
-                <Router isLogIn={connect}/>
+                <RequestProvider>
+                    <Router isLogIn={connect}/>
+                </RequestProvider>
             </SnackbarProvider>
         </ThemeProvider>
     );

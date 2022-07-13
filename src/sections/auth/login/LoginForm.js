@@ -1,30 +1,28 @@
 import * as Yup from 'yup';
-import {useCallback, useState} from 'react';
+import {useCallback, useContext, useState} from 'react';
 import {useDispatch} from "react-redux";
-import {useSnackbar} from "notistack";
 import {useNavigate} from "react-router-dom";
 // form
 import {useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 // @mui
-import {Link, Stack, IconButton, InputAdornment} from '@mui/material';
+import {Stack, IconButton, InputAdornment} from '@mui/material';
 import {LoadingButton} from '@mui/lab';
 // components
 import Iconify from '../../../components/Iconify';
-import {FormProvider, RHFTextField, RHFCheckbox} from '../../../components/hook-form';
-import {get, post} from "../../../http/request";
+import {FormProvider, RHFTextField} from '../../../components/hook-form';
 import {login, loadUser} from "../../../store/user";
+import {RequestContext} from "../../../http/RequestProvider";
 
 // ----------------------------------------------------------------------
 
 export default function LoginForm() {
-
-    const {enqueueSnackbar} = useSnackbar()
     const navigate = useNavigate();
 
     const dispatch = useDispatch();
 
     const [showPassword, setShowPassword] = useState(false);
+    const request = useContext(RequestContext)
 
     const LoginSchema = Yup.object().shape({
         username: Yup.string().required('Nom d\'utilisateur obligatoire !'),
@@ -52,21 +50,22 @@ export default function LoginForm() {
         formData.append("Username", e.username)
         formData.append("Password", e.password)
 
-        const data = await post("/Auth/login", {
-            form: formData,
-            snack: enqueueSnackbar,
-            msg: "Bienvenu"
+        const data = await request.fetch("/Auth/login", {
+            method: 'post',
+            body: formData,
+            successMsg: "Bienvenu !"
         })
+
         if (data) {
             dispatch(login(data.token))
-            const user = await get("/Auth/user")
+            const user = await request.fetch("/Auth/user")
             if (user) {
                 dispatch(loadUser(user))
                 navigate('/dashboard', {replace: true});
             }
         }
 
-    }, [dispatch, enqueueSnackbar, navigate])
+    }, [dispatch, navigate, request])
 
     return (
         <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>

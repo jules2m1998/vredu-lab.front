@@ -1,64 +1,47 @@
 import axios from "./axios";
 
-const showError = (e, defaultError = "", snack = null, error = null, handleUnauthorized = () => {}) => {
-    const {response: {data: {errors}, status}} = e
-    if (snack) {
-        if (errors) {
+export default class Fetch{
+
+    constructor(snack, handleUnauthorized) {
+        this.snack = snack
+        this.handleUnauthorized = handleUnauthorized
+    }
+
+    async fetch(url, { method = "get", body = null, defaultErrorMsg =  "", errorObject = {}, successMsg = null, isShowError = true} = {}){
+        try {
+            const {data} = !body || method === "get" ? await axios[method](url) : await axios[method](url, body)
+            if (successMsg){
+                this.snack(successMsg, {variant: "success"})
+            }
+            return data
+        } catch (e) {
+            this.handleErrors(e, {
+                defaultError:  defaultErrorMsg,
+                isShowError,
+                error: errorObject
+            })
+            return null
+        }
+    }
+
+    handleErrors(e, { defaultError = "", error = null, isShowError = true }){
+        const {response: {data: {errors}, status}} = e
+
+        if (errors){
             const er = Object.entries(errors).reduce((accumulateur, valeurCourante) => {
                 const current = Array.isArray(valeurCourante[1]) ? valeurCourante[1] : [valeurCourante[1]]
                 return [...accumulateur, ...current]
             }, [])
-            er.forEach((e) => snack(e, {variant: "error"}))
-        } else if (status === 404) {
-            snack("Element introuvable !", {variant: "error"})
-        } else if (status === 401) {
-            handleUnauthorized()
-            snack("Vous ne pouvez pas effectuer cette action !", {variant: "error"})
-        } else {
+            if (isShowError) er.forEach((e) => this.snack(e, {variant: "error"}))
+        } else if (status  === 404 && isShowError) {
+            this.snack("Element introuvable !", {variant: "error"})
+        } else if (status === 401){
+            this.handleUnauthorized()
+            console.log(status)
+            if (isShowError) this.snack("Vous ne pouvez pas effectuer cette action !", {variant: "error"})
+        } else if (isShowError) {
             const eltMsg = error?.filter(h => h.status === status)[0]
-            snack(eltMsg ? eltMsg.msg : defaultError, {variant: "error"})
+            this.snack(eltMsg ? eltMsg.msg  : defaultError, {variant: "error"})
         }
-    }
-}
-
-export const post = async (url, {
-    form,
-    snack = null,
-    errorMsg = null,
-    msg = null,
-    handleUnauthorized = () => null
-} = null) => {
-    try {
-        const res = await axios.post(url, form);
-        const {data} = res
-        if (snack) {
-            snack(msg || "Success !", {variant: "success"})
-        }
-        return data;
-    } catch (e) {
-        showError(e, "Vous n'etes pas autorise a effectuer cette action !", snack, errorMsg, handleUnauthorized)
-        return null
-    }
-}
-
-
-export const get = async (url, {
-    method = "get",
-    snack = null,
-    errorMsg = null,
-    msg = null,
-    isSuccess = false,
-    handleUnauthorized = () => null
-} = null) => {
-    try {
-        const {data} = await axios[method](url)
-        if (snack && isSuccess) {
-            snack(msg || "Success !", {variant: "success"})
-        }
-        return data
-
-    } catch (e) {
-        showError(e, "Element introuvable !", snack, errorMsg, handleUnauthorized)
-        return null
     }
 }
