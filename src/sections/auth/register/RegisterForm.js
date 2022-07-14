@@ -27,10 +27,10 @@ RegisterForm.propTypes = {
 };
 
 const defaultUser = {
-    username: '',
+    userName: '',
     password: '',
-    lastname: '',
-    firstname: "",
+    lastName: '',
+    firstName: "",
     email: "",
     phoneNumber: "",
     birthDate: "",
@@ -53,7 +53,7 @@ export default function RegisterForm({isAdmin = false, user = defaultUser, id, h
         firstName: Yup.string().required('Le prenom est obligatoire'),
         userName: Yup.string().required('Le prenom est obligatoire'),
         lastName: Yup.string().required('Le nom est obligatoire'),
-        email: Yup.string().email('L\'adresse email doit etre valide !').required('\'adresse email est obligatoire'),
+        email: Yup.string().email('L\'adresse email doit etre valide !').required('L\'adresse email est obligatoire'),
         phoneNumber: Yup.string().required('Numero de telephone obligatoire !'),
         sex: Yup.string().required('Le mot de passe est obligatoire'),
         birthDate: Yup.string().required('Le mot de passe est obligatoire'),
@@ -102,7 +102,6 @@ export default function RegisterForm({isAdmin = false, user = defaultUser, id, h
                 }
                 return {...previousValue}
             }, {})
-            console.log(updated)
             if (!Object.keys(updated).length){
                 enqueueSnackbar("Aucune information modifiee dans le formulaire !", {variant: 'warning'})
             } else {

@@ -29,9 +29,9 @@ const navConfig = [
         ]
     },
     {
-        title: 'product',
-        path: '/dashboard/products',
-        icon: getIcon('eva:shopping-bag-fill'),
+        title: 'compte',
+        path: '/dashboard/account',
+        icon: getIcon('eva:settings-outline'),
     },
     {
         title: 'blog',

@@ -8,9 +8,9 @@ import User from './pages/User';
 import Login from './pages/Login';
 import NotFound from './pages/Page404';
 import Register from './pages/Register';
-import Products from './pages/Products';
 import DashboardApp from './pages/DashboardApp';
 import UserForm from "./pages/UserForm";
+import Settings from "./pages/Settings";
 
 // ----------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ export default function Router({isLogIn = false}) {
         { path: 'user/list', element: <User /> },
         { path: 'user/form', element: <UserForm /> },
         { path: 'user/form/:id', element: <UserForm /> },
-        { path: 'products', element: <Products /> },
+        { path: 'account', element: <Settings /> },
         { path: 'blog', element: <Blog /> },
         { path: '', element: <Navigate to="/dashboard/app" /> },
       ],

@@ -1,4 +1,5 @@
 import {createSlice} from '@reduxjs/toolkit'
+import moment from "moment";
 
 const NAME = {
     user: "user",
@@ -24,7 +25,6 @@ export const counterSlice = createSlice({
     reducers: {
         login: (state, action) => {
             state.token = action.payload
-            console.log(action.payload)
             localStorage.setItem(NAME.token, action.payload)
         },
         loginFailed: (state) => {
@@ -35,6 +35,11 @@ export const counterSlice = createSlice({
             state.user = u
             localStorage.setItem(NAME.user, JSON.stringify(u))
             state.connected = true
+        },
+        updateUser: (state, action) => {
+            const u = {...action.payload, isAdmin: state.user.isAdmin }
+            state.user = u
+            localStorage.setItem(NAME.user, JSON.stringify(u))
         },
         logout: (state) => {
             state.token = null
@@ -47,9 +52,12 @@ export const counterSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const {loadUser, logout, loginFailed, login} = counterSlice.actions
+export const {loadUser, logout, updateUser, loginFailed, login} = counterSlice.actions
 
 export const isConnected = state => state.auth.connected
-export const connectedUser = state => state.auth.user
+export const connectedUser = state => {
+    const {userName, lastName, firstName, email, phoneNumber, birthDate, sex, isAdmin } = state.auth.user
+    return {userName, lastName, firstName, email, phoneNumber, birthDate: moment(birthDate).format('YYYY-MM-DD'), sex, isAdmin}
+}
 
 export default counterSlice.reducer
