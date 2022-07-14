@@ -12,7 +12,7 @@ const navConfig = [
         icon: getIcon('eva:pie-chart-2-fill'),
     },
     {
-        title: 'user',
+        title: 'Utilisateurs',
         path: '/dashboard/user',
         icon: getIcon('eva:people-fill'),
         admin: true,
@@ -29,7 +29,7 @@ const navConfig = [
         ]
     },
     {
-        title: 'compte',
+        title: 'comptes',
         path: '/dashboard/account',
         icon: getIcon('eva:settings-outline'),
     },
@@ -49,9 +49,38 @@ const navConfig = [
         icon: getIcon('eva:person-add-fill'),
     },
     {
-        title: 'Not found',
-        path: '/404',
-        icon: getIcon('eva:alert-triangle-fill'),
+        title: 'Textures',
+        path: '/dashboard/textures',
+        icon: getIcon('icon-park:texture'),
+        admin: true,
+        children: [
+            {
+                title: 'Liste',
+                path: '/dashboard/textures/list'
+            },
+            {
+                title: 'Creer',
+                path: '/dashboard/textures/form'
+            },
+
+        ]
+    },
+    {
+        title: 'Effets',
+        path: '/dashboard/effects',
+        icon: getIcon('icon-park-outline:application-effect'),
+        admin: true,
+        children: [
+            {
+                title: 'Liste',
+                path: '/dashboard/Effets/list'
+            },
+            {
+                title: 'Creer',
+                path: '/dashboard/Effets/form'
+            },
+
+        ]
     },
 ];
 

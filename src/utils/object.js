@@ -1,3 +1,4 @@
+import {filter} from "lodash";
 
 export function getDiff (obj1, obj2, upper = false) {
     return Object.entries(obj1).reduce((acc, [k, v]) => {
@@ -12,4 +13,33 @@ export function toFormData(obj){
     const formData = new FormData()
     Object.entries(obj).forEach(([k, v]) => formData.append(k,v))
     return formData
+}
+
+export function applySortFilter(array, comparator, query) {
+	const stabilizedThis = array.map((el, index) => [el, index]);
+	stabilizedThis.sort((a, b) => {
+		const order = comparator(a[0], b[0]);
+		if (order !== 0) return order;
+		return a[1] - b[1];
+	});
+	if (query) {
+		return filter(array, (_user) => _user.userName.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+	}
+	return stabilizedThis.map((el) => el[0]);
+}
+
+function descendingComparator(a, b, orderBy) {
+	if (b[orderBy] < a[orderBy]) {
+		return -1;
+	}
+	if (b[orderBy] > a[orderBy]) {
+		return 1;
+	}
+	return 0;
+}
+
+export function getComparator(order, orderBy) {
+	return order === 'desc'
+		? (a, b) => descendingComparator(a, b, orderBy)
+		: (a, b) => -descendingComparator(a, b, orderBy);
 }
