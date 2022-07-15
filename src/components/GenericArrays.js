@@ -32,6 +32,17 @@ const RootStyle = styled(Toolbar)(({theme}) => ({
 	padding: theme.spacing(0, 1, 0, 3),
 }));
 
+/**
+ *
+ * @param items
+ * @returns {Array}
+ */
+const getLisItem = (items) => {
+	if (!Array.isArray(items[0]?.data)) return items
+	
+	return items.reduce((acc, val) => [...acc, ...val.data], [])
+}
+
 const SearchStyle = styled(OutlinedInput)(({theme}) => ({
 	width: 240,
 	transition: theme.transitions.create(['box-shadow', 'width'], {
@@ -129,6 +140,7 @@ const ListHead = (
 	const createSortHandler = useCallback((property) => (event) => {
 		onRequestSort(event, property);
 	}, [onRequestSort]);
+	
 	return <TableHead>
 		<TableRow>
 			<TableCell padding="checkbox">
@@ -194,6 +206,7 @@ GenericTabs.propTypes = {
 	onRowsPerPageChange: PropTypes.func,
 	children: PropTypes.node,
 }
+
 function GenericTabs(
 	{
 		isLoading,
@@ -215,6 +228,7 @@ function GenericTabs(
 		children,
 	}
 ) {
+	const count = useMemo(() => getLisItem(items).length, [items])
 	
 	if (isLoading) return <Loader text={loaderMsg}/>
 	
@@ -225,7 +239,7 @@ function GenericTabs(
 					order={order}
 					orderBy={orderBy}
 					headLabel={headLabel}
-					rowCount={items.length}
+					rowCount={count}
 					numSelected={selected.length}
 					onRequestSort={onRequestSort}
 					onSelectAllClick={onSelectAllClick}
@@ -284,12 +298,20 @@ export default function MyTabs({items, isLoading, isSetLoading, row, head}) {
 	
 	const handleSelectAllClick = useCallback((event) => {
 		if (event.target.checked) {
-			const newSelecteds = items.map((n) => n.id);
+			const newSelecteds = getLisItem(items).map((n) => n.id);
 			setSelected(newSelecteds);
 			return;
 		}
 		setSelected([]);
 	}, [items]);
+	
+	const handleSelectListAllClick = useCallback((event, list) => {
+		if (event.target.checked) {
+			setSelected(l => Array.from(new Set([...l, ...list])));
+			return;
+		}
+		setSelected(l => [...l.filter(i => list.indexOf(i) < 0)]);
+	}, []);
 	
 	const handleFilterByName = useCallback((event) => {
 		setFilterName(event.target.value);
@@ -329,49 +351,51 @@ export default function MyTabs({items, isLoading, isSetLoading, row, head}) {
 	const filteredItems = useMemo(() => applySortFilter(items, getComparator(order, orderBy), filterName), [filterName, items, order, orderBy])
 	
 	return <>
-				<ListToolBar
-					isLoading={isLoading}
-					placeholder="Rechercher une texture"
-					numSelected={selected.length}
-					filterName={filterName}
-					onFilterName={handleFilterByName}
-				/>
-				<GenericTabs
-					isLoading={isLoading}
-					loaderMsg="Chargement des textures..."
-					items={items}
-					selected={selected}
-					order={order}
-					orderBy={orderBy}
-					headLabel={head}
-					filterName={filterName}
-					rowsPerPage={rowsPerPage}
-					page={page}
-					onSelectAllClick={handleSelectAllClick}
-					onRequestSort={handleRequestSort}
-					onPageChange={handleChangePage}
-					onRowsPerPageChange={handleChangeRowsPerPage}
-				>
-					{
-						filteredItems
-							.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-							.map(
-								(item) => {
-									const isItemSelected = selected.indexOf(item.id) !== -1;
-									
-									return cloneElement(
-										row,
-										{
-											key: item.id,
-											item,
-											isItemSelected,
-											isSetLoading,
-											onSelected: handleClick
-										}
-									)
+		<ListToolBar
+			isLoading={isLoading}
+			placeholder="Rechercher une texture"
+			numSelected={selected.length}
+			filterName={filterName}
+			onFilterName={handleFilterByName}
+		/>
+		<GenericTabs
+			isLoading={isLoading}
+			loaderMsg="Chargement des textures..."
+			items={items}
+			selected={selected}
+			order={order}
+			orderBy={orderBy}
+			headLabel={head}
+			filterName={filterName}
+			rowsPerPage={rowsPerPage}
+			page={page}
+			onSelectAllClick={handleSelectAllClick}
+			onRequestSort={handleRequestSort}
+			onPageChange={handleChangePage}
+			onRowsPerPageChange={handleChangeRowsPerPage}
+		>
+			{
+				filteredItems
+					.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+					.map(
+						(item, k) => {
+							const isItemSelected = selected.indexOf(item.id) !== -1;
+							
+							return cloneElement(
+								row,
+								{
+									key: k,
+									item,
+									isItemSelected,
+									isSetLoading,
+									onSelected: handleClick,
+									selected,
+									onListSelected: handleSelectListAllClick
 								}
 							)
-					}
-				</GenericTabs>
-			</>
+						}
+					)
+			}
+		</GenericTabs>
+	</>
 }

@@ -1,15 +1,14 @@
 import axios from 'axios';
+import {BASE_URL} from "../utils/const";
 
 // Set config defaults when creating the instance
 const instance = axios.create({
-  baseURL: 'https://localhost:7086/api'
+  baseURL: `${BASE_URL}/api`
 });
 
 // Alter defaults after instance has been created
 instance.interceptors.request.use((config) => {
-    const token = `Bearer ${localStorage.getItem("token")}`;
-    config.headers.Authorization =  token;
-
+  config.headers.Authorization =  `Bearer ${localStorage.getItem("token")}`;
     return config;
 });
 
