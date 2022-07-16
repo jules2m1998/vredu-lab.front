@@ -2,7 +2,7 @@ import {
 	Box,
 	Checkbox,
 	IconButton,
-	InputAdornment,
+	InputAdornment, ListItemIcon, ListItemText, Menu, MenuItem,
 	OutlinedInput,
 	Table,
 	TableBody,
@@ -16,7 +16,8 @@ import {
 	Tooltip,
 	Typography
 } from "@mui/material";
-import {cloneElement, useCallback, useMemo, useState} from "react";
+import {Link as RouterLink} from "react-router-dom";
+import {cloneElement, useCallback, useMemo, useRef, useState} from "react";
 import PropTypes from "prop-types";
 import {styled} from "@mui/material/styles";
 import Iconify from "./Iconify";
@@ -24,6 +25,7 @@ import Loader from "./Loader";
 import Scrollbar from "./Scrollbar";
 import SearchNotFound from "./SearchNotFound";
 import {applySortFilter, getComparator} from "../utils/object";
+import {getLisItem} from "../utils/array";
 
 const RootStyle = styled(Toolbar)(({theme}) => ({
 	height: 96,
@@ -32,16 +34,70 @@ const RootStyle = styled(Toolbar)(({theme}) => ({
 	padding: theme.spacing(0, 1, 0, 3),
 }));
 
-/**
- *
- * @param items
- * @returns {Array}
- */
-const getLisItem = (items) => {
-	if (!Array.isArray(items[0]?.data)) return items
+export const MoreAction = ({menus}) => {
 	
-	return items.reduce((acc, val) => [...acc, ...val.data], [])
+	const ref = useRef(null);
+	const [isOpen, setIsOpen] = useState(false);
+	
+	const open = useCallback((e) => {
+		e.stopPropagation()
+		setIsOpen(true)
+	}, [])
+	const close = useCallback(() => {
+		setIsOpen(false)
+	}, [])
+	const handleClick = useCallback((fn) => {
+		close()
+		fn()
+	}, [close])
+	
+	return (
+		<>
+			<IconButton ref={ref} onClick={open}>
+				<Iconify icon="eva:more-vertical-fill" width={20} height={20}/>
+			</IconButton>
+			<Menu
+				open={isOpen}
+				anchorEl={ref.current}
+				onClick={(e) => e.stopPropagation()}
+				onClose={close}
+				PaperProps={{
+					sx: {width: 200, maxWidth: '100%'},
+				}}
+				anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+				transformOrigin={{vertical: 'top', horizontal: 'right'}}
+			>
+				{
+					menus.map(({
+						           title,
+						           icon,
+						           link,
+						           color,
+						           onClick
+					           }, k) => {
+						if (onClick) return (<MenuItem key={k} sx={{color: color || "text.primary"}} onClick={() => handleClick(onClick)}>
+							<ListItemIcon sx={{color: color || "text.primary"}}>
+								<Iconify icon={icon} width={24} height={24}/>
+							</ListItemIcon>
+							<ListItemText primary={title} primaryTypographyProps={{variant: 'body2'}}/>
+						</MenuItem>)
+						
+						return (<MenuItem key={k} component={RouterLink} to={link} sx={{color: color || "text.primary"}}>
+							<ListItemIcon>
+								<Iconify sx={{color: color || "text.primary"}} icon={icon} width={24} height={24}/>
+							</ListItemIcon>
+							<ListItemText primary={title} primaryTypographyProps={{variant: 'body2'}}/>
+						</MenuItem>)
+					})
+				}
+			</Menu>
+		</>
+	)
 }
+MoreAction.propTypes = {
+	menus: PropTypes.array
+}
+
 
 const SearchStyle = styled(OutlinedInput)(({theme}) => ({
 	width: 240,
@@ -104,7 +160,7 @@ const ListToolBar = (
 		}
 		{numSelected > 0 ? (
 			<>
-				<Box>
+				<Box gap={2}>
 					{actionsButton}
 				</Box>
 			</>
@@ -134,7 +190,8 @@ const ListHead = (
 		headLabel,
 		orderBy,
 		order,
-		onRequestSort
+		onRequestSort,
+		isSetLoading
 	}) => {
 	
 	const createSortHandler = useCallback((property) => (event) => {
@@ -148,6 +205,7 @@ const ListHead = (
 					indeterminate={numSelected > 0 && numSelected < rowCount}
 					checked={rowCount > 0 && numSelected === rowCount}
 					onChange={onSelectAllClick}
+					disabled={isSetLoading}
 				/>
 			</TableCell>
 			{
@@ -166,7 +224,9 @@ const ListHead = (
 							{cell.label}
 							{
 								orderBy === cell.id ? (
-									<Box sx={{...visuallyHidden}}>{order === 'desc' ? 'sorted descending' : 'sorted ascending'}</Box>
+									<Box sx={{...visuallyHidden}}>
+										{order === 'desc' ? 'sorted descending' : 'sorted ascending'}
+									</Box>
 								) : null
 							}
 						</TableSortLabel>
@@ -183,6 +243,7 @@ ListHead.propTypes = {
 	rowCount: PropTypes.number,
 	headLabel: PropTypes.array,
 	numSelected: PropTypes.number,
+	isSetLoading: PropTypes.bool,
 	onRequestSort: PropTypes.func,
 	onSelectAllClick: PropTypes.func,
 }
@@ -197,6 +258,7 @@ GenericTabs.propTypes = {
 	onSelectAllClick: PropTypes.func,
 	emptyRows: PropTypes.number,
 	isNotFound: PropTypes.bool,
+	isSetLoading: PropTypes.bool,
 	items: PropTypes.array,
 	selected: PropTypes.array,
 	filterName: PropTypes.string,
@@ -226,6 +288,7 @@ function GenericTabs(
 		onRowsPerPageChange,
 		selected,
 		children,
+		isSetLoading
 	}
 ) {
 	const count = useMemo(() => getLisItem(items).length, [items])
@@ -235,24 +298,29 @@ function GenericTabs(
 	return <Scrollbar>
 		<TableContainer sx={{minWidth: 800}}>
 			<Table>
-				<ListHead
-					order={order}
-					orderBy={orderBy}
-					headLabel={headLabel}
-					rowCount={count}
-					numSelected={selected.length}
-					onRequestSort={onRequestSort}
-					onSelectAllClick={onSelectAllClick}
-				/>
-				<TableBody>
-					{children}
-					{emptyRows > 0
-						&& (
-							<TableRow style={{height: 53 * emptyRows}}>
-								<TableCell colSpan={6}/>
-							</TableRow>
-						)}
-				</TableBody>
+				{
+					!isNotFound && <>
+						<ListHead
+							order={order}
+							orderBy={orderBy}
+							headLabel={headLabel}
+							rowCount={count}
+							numSelected={selected.length}
+							onRequestSort={onRequestSort}
+							onSelectAllClick={onSelectAllClick}
+							isSetLoading={isSetLoading}
+						/>
+						<TableBody>
+							{children}
+							{emptyRows > 0
+								&& (
+									<TableRow style={{height: 53 * emptyRows}}>
+										<TableCell colSpan={6}/>
+									</TableRow>
+								)}
+						</TableBody>
+					</>
+				}
 				{isNotFound &&
 					(
 						<TableBody>
@@ -284,11 +352,24 @@ MyTabs.propTypes = {
 	head: PropTypes.array,
 	isLoading: PropTypes.bool,
 	isSetLoading: PropTypes.bool,
-	row: PropTypes.node
+	actionsButton: PropTypes.node,
+	row: PropTypes.node,
+	onDeleteItems: PropTypes.func,
+	onReloadData: PropTypes.func,
 }
 
 
-export default function MyTabs({items, isLoading, isSetLoading, row, head}) {
+export default function MyTabs(
+	{
+		items,
+		isLoading,
+		isSetLoading,
+		row,
+		head,
+		onReloadData,
+		actionsButton,
+		onDeleteItems
+	}) {
 	const [filterName, setFilterName] = useState('');
 	const [order, setOrder] = useState('asc');
 	const [selected, setSelected] = useState([]);
@@ -304,6 +385,10 @@ export default function MyTabs({items, isLoading, isSetLoading, row, head}) {
 		}
 		setSelected([]);
 	}, [items]);
+	const handleDeleteItems = useCallback(() => {
+		setSelected([])
+		return onDeleteItems
+	}, [onDeleteItems])
 	
 	const handleSelectListAllClick = useCallback((event, list) => {
 		if (event.target.checked) {
@@ -357,9 +442,11 @@ export default function MyTabs({items, isLoading, isSetLoading, row, head}) {
 			numSelected={selected.length}
 			filterName={filterName}
 			onFilterName={handleFilterByName}
+			actionsButton={cloneElement(actionsButton, {selected, onDeleteItems: handleDeleteItems})}
 		/>
 		<GenericTabs
 			isLoading={isLoading}
+			isNotFound={filteredItems.length === 0}
 			loaderMsg="Chargement des textures..."
 			items={items}
 			selected={selected}
@@ -373,6 +460,7 @@ export default function MyTabs({items, isLoading, isSetLoading, row, head}) {
 			onRequestSort={handleRequestSort}
 			onPageChange={handleChangePage}
 			onRowsPerPageChange={handleChangeRowsPerPage}
+			isSetLoading={isSetLoading}
 		>
 			{
 				filteredItems
@@ -390,7 +478,9 @@ export default function MyTabs({items, isLoading, isSetLoading, row, head}) {
 									isSetLoading,
 									onSelected: handleClick,
 									selected,
-									onListSelected: handleSelectListAllClick
+									onListSelected: handleSelectListAllClick,
+									onReloadData,
+									onDeleteItems
 								}
 							)
 						}
