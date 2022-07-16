@@ -327,14 +327,19 @@ export default function Textures() {
 		setSetLoading(false)
 	}, [request])
 	
-	return <Page>
+	return <Page title="Textures">
 		<Container>
 			<Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
 				<Typography variant="h4" gutterBottom>
 					Liste des textures
 				</Typography>
-				<Button disabled={isloading} variant="contained" component={RouterLink} to="/dashboard/user/form"
-				        startIcon={<Iconify icon="eva:plus-fill"/>}>
+				<Button
+					disabled={isloading}
+					variant="contained"
+					component={RouterLink}
+					to="/dashboard/textures/form"
+					startIcon={<Iconify icon="eva:plus-fill"/>}
+				>
 					Nouvelle texture
 				</Button>
 			</Stack>

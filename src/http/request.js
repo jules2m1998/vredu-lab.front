@@ -1,5 +1,13 @@
 import axios from "./axios";
 
+export const HTTP_CONFIG = {
+    FORM_DATA: {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+    }
+}
+
 export default class Fetch{
 
     constructor(snack, handleUnauthorized) {
@@ -7,9 +15,9 @@ export default class Fetch{
         this.handleUnauthorized = handleUnauthorized
     }
 
-    async fetch(url, { method = "get", body = null, defaultErrorMsg =  "", errorObject = {}, successMsg = null, isShowError = true} = {}){
+    async fetch(url, { method = "get", body = null, defaultErrorMsg =  "", errorObject = {}, successMsg = null, isShowError = true, config = {}} = {}){
         try {
-            const {data} = !body || method === "get" ? await axios[method](url) : await axios[method](url, body)
+            const {data} = !body || method === "get" ? await axios[method](url, {...config}) : await axios[method](url, body, {...config})
             if (successMsg){
                 this.snack(successMsg, {variant: "success"})
             }

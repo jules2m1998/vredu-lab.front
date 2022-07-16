@@ -12,6 +12,7 @@ import DashboardApp from './pages/DashboardApp';
 import UserForm from "./pages/UserForm";
 import Settings from "./pages/Settings";
 import Textures from "./pages/Textures";
+import RegisterTexture from "./pages/RegisterTexture";
 
 // ----------------------------------------------------------------------
 
@@ -30,7 +31,7 @@ export default function Router({isLogIn = false}) {
         { path: 'effects/typeform', element: <Settings /> },
         { path: 'textures/list', element: <Textures /> },
         { path: 'textures/typeform', element: <Settings /> },
-        { path: 'textures/form', element: <Settings /> },
+        { path: 'textures/form', element: <RegisterTexture /> },
         { path: 'blog', element: <Blog /> },
         { path: '', element: <Navigate to="/dashboard/app" /> },
       ],
