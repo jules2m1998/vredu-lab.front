@@ -1,9 +1,10 @@
-import {Grid, IconButton, MenuItem, Stack} from "@mui/material";
+import {Grid, Stack} from "@mui/material";
 import * as Yup from "yup";
 import PropTypes from "prop-types";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {useCallback, useContext, useEffect, useMemo, useState} from "react";
+import {useNavigate} from "react-router-dom";
 import {LoadingButton} from "@mui/lab";
 import MyCard from "./MyCard";
 import {toFormData} from "../utils/object";
@@ -13,63 +14,17 @@ import {DialogOneInput} from "./DialogOneInput";
 import ImgFileDrag from "./ImgFileDrag";
 import useSnack from "../hooks/useSnack";
 import {HTTP_CONFIG} from "../http/request";
-import Iconify from "./Iconify";
-import {ICON} from "../utils/const";
 import MySelectList from "./MySelectList";
+import usePut from "../hooks/usePut";
+import useDelete from "../hooks/useDelete";
+import useGet from "../hooks/useGet";
 
-const OneGroup = ({name, id, onReload}) => {
-	const [open, setOpen] = useState(false)
-	const request = useContext(RequestContext)
-	
-	const handleSubmit = useCallback(async (v) => {
-		const data = await request.fetch(`TextureGroup/${id}?name=${v.name}`, {
-			method: "put",
-			successMsg: "Element modifie !"
-		})
-		if (data) {
-			setOpen(false)
-			onReload()
-		}
-		console.log(data)
-	}, [id, onReload, request])
-	
-	return <>
-		<MenuItem
-			selected
-			value={id}
-		>
-			<Stack flex flexDirection="row" gap={2} alignItems="center" justifyContent="center">
-				<Stack flexDirection="row">
-					<IconButton size="small">
-						<Iconify icon={ICON.delete} sx={{color: "error.main"}}/>
-					</IconButton>
-					<IconButton size="small" onClick={() => setOpen(true)}>
-						<Iconify icon={ICON.update} sx={{color: "text.secondary"}}/>
-					</IconButton>
-				</Stack>
-				<option value={id}>{name}</option>
-			</Stack>
-			<DialogOneInput
-				open={open}
-				apiName="name"
-				title="Modification d'un type de texture"
-				description="Changer la valeur ci-dessous pour modifier ce type"
-				onClose={() => setOpen(false)}
-				label="Nom du groupe"
-				value={name}
-				onSubmit={handleSubmit}
-			/>
-		</MenuItem>
-	</>
+TextureForm.propTypes = {
+	texture: PropTypes.object,
+	onSetTexture: PropTypes.func,
 }
 
-OneGroup.propTypes = {
-	name: PropTypes.string,
-	onReload: PropTypes.func,
-	id: PropTypes.number,
-}
-
-export default function TextureForm() {
+export default function TextureForm({texture = {}, onSetTexture = null}) {
 	const [, setLoading] = useState(false)
 	const [groupActive, setGroupActive] = useState(null)
 	const [groupActiveError, setGroupActiveError] = useState(null)
@@ -79,20 +34,29 @@ export default function TextureForm() {
 	const [types, setTypes] = useState([])
 	const request = useContext(RequestContext)
 	const alert = useSnack()
+	const navigate = useNavigate();
+	const putMethod = usePut()
+	const deleteMethod = useDelete();
+	const getMethod = useGet()
+	
+	const getGroup = useCallback(async () => {
+		setLoading(true)
+		const data = await getMethod('TextureGroup')
+		if (data) setTypes(data)
+		setLoading(false)
+	}, [getMethod]);
 	
 	const reloadType = useCallback(() => {
+		if (texture?.group?.id) setGroupActive(texture?.group?.id)
 		setLoading(true)
-		request.fetch("TextureGroup").then(t => {
-			if (t) setTypes(t)
-			setLoading(false)
-		})
-	}, [request])
+		getGroup()
+	}, [getGroup, texture?.group?.id])
 	
 	useEffect(reloadType, [reloadType])
 	
 	const defaultValues = useMemo(() => ({
-		Name: ""
-	}), [])
+		Name: texture?.name || ""
+	}), [texture])
 	
 	const RegisterSchema = Yup.object().shape({
 		Name: Yup.string().required('Nom obligatoire !')
@@ -106,38 +70,61 @@ export default function TextureForm() {
 	const {handleSubmit, formState: {isSubmitting}} = useMemo(() => (methods), [methods])
 	
 	const onSubmit = useCallback(async (e) => {
-		if (!file || !groupActive) return
-		const formData = toFormData({...e, GroupId: groupActive, Image: file})
-		await request.fetch("Texture", {
-			method: "post",
-			body: formData,
-			config: HTTP_CONFIG.FORM_DATA,
-			successMsg: "Texture cree avec succces !"
-		})
-	}, [file, groupActive, request])
+		
+		if (!texture?.id) {
+			const formData = toFormData({...e, GroupId: groupActive, Image: file})
+			if (!file || !groupActive) return
+			const data = await request.fetch("Texture", {
+				method: "post",
+				body: formData,
+				config: HTTP_CONFIG.FORM_DATA,
+				successMsg: "Texture cree avec succces !"
+			})
+			if (data) navigate("/dashboard/textures/list")
+		} else {
+			const body = {}
+			if (groupActive !== texture?.group?.id) {
+				body.GroupId = groupActive
+			}
+			if (file) {
+				body.Image = file
+			}
+			if (e.Name?.trim() !== texture.name?.trim()) {
+				body.Name = e.Name
+			}
+			if (!Object.entries(body).length >= 1) {
+				alert("Aucune information modifiee !", {variant: "warning"})
+			} else {
+				body.Id = texture?.id
+				const data = await putMethod("Texture", "Texture modifiee !", {data: toFormData(body)})
+				if (data) onSetTexture(data)
+			}
+		}
+		
+	}, [alert, file, groupActive, navigate, onSetTexture, putMethod, request, texture])
 	
 	const handleClose = useCallback(() => setOpen(false), [])
 	
 	const handleCreateType = useCallback(async (e) => {
-		console.log(e)
-		const data = await request.fetch(`TextureGroup?name=${e.name}`, {
+		await request.fetch(`TextureGroup?name=${e.name}`, {
 			method: "post",
 			successMsg: "Type de texture cree !"
 		})
-		console.log(data)
 		reloadType()
 		setOpen(false)
 	}, [reloadType, request])
 	
 	const handleVerify = useCallback(() => {
-		if (!file) {
-			alert("L'image est oblgatoire !", {variant: "warning"})
-			setErrorMsg("L'image est obligatoire !")
+		if (!texture?.id) {
+			if (!file) {
+				alert("L'image est oblgatoire !", {variant: "warning"})
+				setErrorMsg("L'image est obligatoire !")
+			}
+			if (!groupActive) {
+				setGroupActiveError("Le type de texture est obligatoire !")
+			}
 		}
-		if (!groupActive) {
-			setGroupActiveError("Le type de texture est obligatoire !")
-		}
-	}, [alert, file, groupActive])
+	}, [alert, file, groupActive, texture])
 	
 	const openDialog = useCallback(() => setOpen(true), [])
 	const handleEditItem = useCallback(async (id, v) => {
@@ -152,13 +139,26 @@ export default function TextureForm() {
 		}
 		return false
 	}, [reloadType, request])
+	const handleDeleteGroup = useCallback(async (id) => {
+		await deleteMethod(`TextureGroup/${id}`, "Supression effectuee avec succes !")
+		if (texture?.group?.id === id){
+			navigate("/dashboard/textures/list")
+		}
+		await getGroup()
+	}, [deleteMethod, getGroup, navigate, texture]);
 	
 	return <>
 		<Grid container spacing={2}>
 			<Grid item xs={3}>
 				<MyCard>
-					<ImgFileDrag disabled={isSubmitting} errorMsg={errorMsg} onChange={setFile}
-					             onResetErrorMsg={() => setErrorMsg(null)}/>
+					<ImgFileDrag
+						disabled={isSubmitting}
+						errorMsg={errorMsg}
+						onChange={setFile}
+						onResetErrorMsg={() => setErrorMsg(null)}
+						defaultImage={texture?.image}
+						loading={isSubmitting}
+					/>
 				</MyCard>
 			</Grid>
 			<Grid item xs={9}>
@@ -174,11 +174,15 @@ export default function TextureForm() {
 									onSelected={setGroupActive}
 									active={groupActive}
 									errorMsg={groupActiveError}
-									onResetError={()  => setGroupActiveError(null)}
+									onResetError={() => setGroupActiveError(null)}
+									loading={isSubmitting}
+									onDeleteOne={handleDeleteGroup}
 								/>
 								<LoadingButton size="large" onClick={handleVerify} type="submit" variant="contained"
 								               loading={isSubmitting}>
-									Enregistrer
+									{
+										texture?.id ? "Modifier" : "Enregistrer"
+									}
 								</LoadingButton>
 							</Stack>
 						</Stack>

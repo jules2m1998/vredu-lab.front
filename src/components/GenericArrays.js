@@ -26,6 +26,7 @@ import Scrollbar from "./Scrollbar";
 import SearchNotFound from "./SearchNotFound";
 import {applySortFilter, getComparator} from "../utils/object";
 import {getLisItem} from "../utils/array";
+import ConfirmAlert from "./ConfirmAlert";
 
 const RootStyle = styled(Toolbar)(({theme}) => ({
 	height: 96,
@@ -356,6 +357,8 @@ MyTabs.propTypes = {
 	row: PropTypes.node,
 	onDeleteItems: PropTypes.func,
 	onReloadData: PropTypes.func,
+	deleteMessage: PropTypes.string,
+	deleteDescription: PropTypes.string,
 }
 
 
@@ -367,9 +370,13 @@ export default function MyTabs(
 		row,
 		head,
 		onReloadData,
+		deleteMessage,
+		deleteDescription,
 		actionsButton,
 		onDeleteItems
 	}) {
+	const [deleteDialog, setDeleteDialog] = useState(false);
+	const [isLoadingDelete, setIsLoadingDelete] = useState(false);
 	const [filterName, setFilterName] = useState('');
 	const [order, setOrder] = useState('asc');
 	const [selected, setSelected] = useState([]);
@@ -385,10 +392,13 @@ export default function MyTabs(
 		}
 		setSelected([]);
 	}, [items]);
-	const handleDeleteItems = useCallback(() => {
+	const handleDeleteItems = useCallback(async () => {
+		setIsLoadingDelete(true)
+		await onDeleteItems(selected)
 		setSelected([])
-		return onDeleteItems
-	}, [onDeleteItems])
+		setIsLoadingDelete(false)
+		setDeleteDialog(false)
+	}, [onDeleteItems, selected])
 	
 	const handleSelectListAllClick = useCallback((event, list) => {
 		if (event.target.checked) {
@@ -480,12 +490,21 @@ export default function MyTabs(
 									selected,
 									onListSelected: handleSelectListAllClick,
 									onReloadData,
-									onDeleteItems
+									onDeleteItems: () => setDeleteDialog(true)
 								}
 							)
 						}
 					)
 			}
 		</GenericTabs>
+		
+		<ConfirmAlert
+			open={deleteDialog}
+			onClose={() => setDeleteDialog(false)}
+			title={deleteMessage}
+			description={deleteDescription}
+			isLoading={isLoadingDelete}
+			onSuccess={handleDeleteItems}
+		/>
 	</>
 }

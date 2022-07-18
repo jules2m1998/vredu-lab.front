@@ -13,6 +13,7 @@ import UserForm from "./pages/UserForm";
 import Settings from "./pages/Settings";
 import Textures from "./pages/Textures";
 import RegisterTexture from "./pages/RegisterTexture";
+import {UpdateTexture} from "./pages/UpdateTexture";
 
 // ----------------------------------------------------------------------
 
@@ -32,6 +33,7 @@ export default function Router({isLogIn = false}) {
         { path: 'textures/list', element: <Textures /> },
         { path: 'textures/typeform', element: <Settings /> },
         { path: 'textures/form', element: <RegisterTexture /> },
+        { path: 'textures/form/:id', element: <UpdateTexture /> },
         { path: 'blog', element: <Blog /> },
         { path: '', element: <Navigate to="/dashboard/app" /> },
       ],

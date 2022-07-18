@@ -5,6 +5,7 @@ import PropTypes from "prop-types";
 import Iconify from "./Iconify";
 import {ICON} from "../utils/const";
 import {pulseAnimation} from "../style";
+import {toServerPath} from "../utils/string";
 
 
 export const Img = styled('img')(({isrounded = false, iserror = false, width = 200, height = 200}) => ({
@@ -23,7 +24,7 @@ export const Img = styled('img')(({isrounded = false, iserror = false, width = 2
 ImgFileDrag.propTypes = {
 	isRounded: PropTypes.bool,
 	disabled: PropTypes.bool,
-	errorMsg: PropTypes.bool,
+	errorMsg: PropTypes.string,
 	onResetErrorMsg: PropTypes.func,
 	onChange: PropTypes.func,
 	width: PropTypes.oneOfType([
@@ -32,9 +33,21 @@ ImgFileDrag.propTypes = {
 	height: PropTypes.oneOfType([
 		PropTypes.number, PropTypes.string
 	]),
+	defaultImage: PropTypes.string
 }
 
-export default function ImgFileDrag({onChange, isRounded = false, disabled=false, width = 200, height = 200, errorMsg = null, onResetErrorMsg}) {
+export default function ImgFileDrag(
+	{
+		onChange,
+		isRounded = false,
+		disabled = false,
+		width = 200,
+		height = 200,
+		errorMsg = null,
+		onResetErrorMsg,
+		defaultImage = "https://www.thelist.travel/images/default-img.png"
+	}
+) {
 	const [file, setFile] = useState(null);
 	const fileInput = useRef(null)
 	
@@ -48,7 +61,7 @@ export default function ImgFileDrag({onChange, isRounded = false, disabled=false
 	return <Stack flex alignItems="center" justifyItems="center">
 		<Stack spacing={2}>
 			<Img width={width} height={height} isrounded={isRounded ? 1 : 0} iserror={errorMsg ? 1 : 0}
-			     src={file || "https://www.thelist.travel/images/default-img.png"} alt="Test"/>
+			     src={file || (defaultImage.startsWith("http") ? defaultImage : toServerPath(defaultImage))} alt="Test"/>
 			{
 				errorMsg && <Typography variant="caption" align="center" sx={{color: "error.main"}}>{errorMsg}</Typography>
 			}

@@ -33,7 +33,7 @@ export default class Fetch{
     }
 
     handleErrors(e, { defaultError = "", error = null, isShowError = true }){
-        const {response: {data: {errors}, status}} = e
+        const {response: {data: {errors} = {}, status}} = e
 
         if (errors){
             const er = Object.entries(errors).reduce((accumulateur, valeurCourante) => {
@@ -45,10 +45,9 @@ export default class Fetch{
             this.snack("Element introuvable !", {variant: "error"})
         } else if (status === 401){
             this.handleUnauthorized()
-            console.log(status)
             if (isShowError) this.snack("Vous ne pouvez pas effectuer cette action !", {variant: "error"})
         } else if (isShowError) {
-            const eltMsg = error?.filter(h => h.status === status)[0]
+            const eltMsg = error ? error?.filter(h => h.status === status)[0] : null
             this.snack(eltMsg ? eltMsg.msg  : defaultError, {variant: "error"})
         }
     }

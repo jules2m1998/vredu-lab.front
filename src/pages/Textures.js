@@ -36,18 +36,24 @@ import {toServerPath} from "../utils/string";
 import {removeArrayWithId} from "../utils/array";
 import {ICON} from "../utils/const";
 import {FormProvider, RHFTextField} from "../components/hook-form";
-import ConfirmAlert from "../components/ConfirmAlert";
 
 const Img = styled("img")(() => ({
 	maxWidth: 30,
 	maxHeight: 30
 }))
 
-const Row = ({item, isItemSelected, onSelected, isSetLoading, selected, onListSelected, onReloadData, onDeleteItems}) => {
-	const [open, setOpen] = useState(false);
-	const [loading, setLoading] = useState(false);
+const Row = ({
+	             item,
+	             isItemSelected,
+	             onSelected,
+	             isSetLoading,
+	             selected,
+	             onListSelected,
+	             onReloadData,
+	             onDeleteItems
+             }) => {
+	const [open, setOpen] = useState(true);
 	const [openDialog, setOpenDialog] = useState(false);
-	const [openDialogConfirm, setOpenDialogConfirm] = useState(false);
 	const {name, data, id} = useMemo(() => item, [item])
 	const handleSelectedItem = useCallback((e) => {
 		if (!isSetLoading) onSelected(e)
@@ -60,17 +66,18 @@ const Row = ({item, isItemSelected, onSelected, isSetLoading, selected, onListSe
 	const handleSelected = useCallback((e) => {
 		onListSelected(e, ids)
 	}, [ids, onListSelected])
-	const handleCloseConfirm = useCallback(() => {
-		setOpenDialogConfirm(false)
-	}, [])
+	
+	const handleDeleteMany = useCallback(() => {
+		const event = {target: {checked: true}}
+		onListSelected(event, ids)
+		onDeleteItems()
+	}, [ids, onDeleteItems, onListSelected]);
+	
 	const handleClose = useCallback(() => {
 		setOpenDialog(false)
 	}, [])
 	const handleOpen = useCallback(() => {
 		setOpenDialog(true)
-	}, [])
-	const handleOpenConfirm = useCallback(() => {
-		setOpenDialogConfirm(true)
 	}, [])
 	const onSubmitEdit = useCallback(async (e) => {
 		if (e.data.trim() !== name) {
@@ -86,16 +93,6 @@ const Row = ({item, isItemSelected, onSelected, isSetLoading, selected, onListSe
 			enqueueSnackbar("Vous n'avez pas mofifiez le nom du type", {variant: "warning"})
 		}
 	}, [enqueueSnackbar, id, name, onReloadData, request])
-	const onConfirmDelete = useCallback(async () => {
-		setLoading(true)
-		await request.fetch(`TextureGroup/${id}`, {
-			method: "delete",
-			successMsg: "Suppression effectuee avec success !"
-		})
-		handleCloseConfirm()
-		onReloadData()
-		setLoading(false)
-	}, [handleCloseConfirm, id, onReloadData, request])
 	
 	const isOneSelected = useMemo(() => ids.some(i => selected.includes(i)), [ids, selected])
 	const isAllSelected = useMemo(() => ids.every(i => selected.includes(i)), [ids, selected])
@@ -109,9 +106,9 @@ const Row = ({item, isItemSelected, onSelected, isSetLoading, selected, onListSe
 			title: "Supprimer",
 			icon: ICON.delete,
 			color: "text.accent",
-			onClick: () => handleOpenConfirm()
+			onClick: handleDeleteMany
 		}
-	], [handleOpen, handleOpenConfirm])
+	], [handleDeleteMany, handleOpen])
 	
 	const updateType = useMemo(() => Yup.object().shape({
 		data: Yup.string().required("Le nom du type de texture est obligatoire !")
@@ -186,18 +183,22 @@ const Row = ({item, isItemSelected, onSelected, isSetLoading, selected, onListSe
 								{
 									data.map(({name, user: {userName}, image, id}, k) => {
 											const isSubItemSelected = selected.indexOf(id) !== -1;
+											const handleDeleteOne = () => {
+												handleSelectedItem(id)
+												onDeleteItems()
+											}
 											
 											const menu = [
 												{
 													title: "Modifier",
 													icon: ICON.update,
-													link: ""
+													link: `/dashboard/textures/form/${id}`
 												},
 												{
 													title: "Supprimer",
 													icon: ICON.delete,
 													color: "text.accent",
-													onClick: () => onDeleteItems([id])
+													onClick: handleDeleteOne
 												}
 											]
 											return (
@@ -212,7 +213,7 @@ const Row = ({item, isItemSelected, onSelected, isSetLoading, selected, onListSe
 														{userName}
 													</TableCell>
 													<TableCell align={"right"}>
-														<MoreAction menus={menu} />
+														<MoreAction menus={menu}/>
 													</TableCell>
 												</TableRow>
 											)
@@ -246,14 +247,6 @@ const Row = ({item, isItemSelected, onSelected, isSetLoading, selected, onListSe
 				</DialogActions>
 			</FormProvider>
 		</Dialog>
-		<ConfirmAlert
-			open={openDialogConfirm}
-			onClose={handleCloseConfirm}
-			title="Suppression d'un type de texture !"
-			description="Cette type de texture est compose de texture sa suppression entrainera a suppression de toutes ses textures. Voulez-vous vraiment la supprrimer ?"
-			isLoading={loading}
-			onSuccess={onConfirmDelete}
-		/>
 	</>
 }
 Row.propTypes = {
@@ -273,7 +266,7 @@ const ActionButton = ({selected, onDeleteItems}) => {
 	}, [onDeleteItems, selected])
 	
 	return <>
-		<IconButton disabled={selected.length !== 1} component={RouterLink} to="">
+		<IconButton disabled={selected.length !== 1} component={RouterLink} to={`/dashboard/textures/form/${selected[0]}`}>
 			<Iconify
 				icon="ant-design:edit-outlined"
 				sx={selected.length === 1 ? {color: "text.primary"} : {}}
@@ -353,6 +346,8 @@ export default function Textures() {
 					row={<Row/>}
 					onDeleteItems={handleDeleteList}
 					onReloadData={loadData}
+					deleteMessage="Vous voulez vraiment supprimer ces textures ?"
+					deleteDescription="La suppression de cette texture de tous ce qui les composes !"
 				/>
 			</Card>
 		</Container>

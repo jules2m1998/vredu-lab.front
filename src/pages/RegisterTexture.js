@@ -9,7 +9,7 @@ export default function RegisterTexture() {
 				<Typography variant="h4" sx={{}}>
 					Creation d'une texture
 				</Typography>
-				<Typography sx={{color: 'text.secondary', mb: 5}}>Saisissez vos les informations sur la texture a creer ci-dessous ! </Typography>
+				<Typography sx={{color: 'text.secondary', mb: 5}}>Saisissez les informations sur la texture a creer ci-dessous ! </Typography>
 			</Stack>
 			<Stack>
 				<TextureForm />

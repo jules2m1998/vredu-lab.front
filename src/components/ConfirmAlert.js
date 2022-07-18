@@ -25,10 +25,10 @@ export default function ConfirmAlert({open, onClose, onSuccess, title, descripti
 			</DialogContentText>
 		</DialogContent>
 		<DialogActions>
-			<LoadingButton loading={isLoading} onClick={onSuccess} >
+			<LoadingButton loading={isLoading} onClick={onSuccess} sx={{color: "text.accent"}}>
 				Supprimer
 			</LoadingButton>
-			<Button disabled={isLoading} autoFocus onClick={onClose} sx={{color: "text.accent"}}>
+			<Button disabled={isLoading} autoFocus onClick={onClose}>
 				Annuler
 			</Button>
 		</DialogActions>
