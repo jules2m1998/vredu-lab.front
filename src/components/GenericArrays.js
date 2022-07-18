@@ -359,6 +359,7 @@ MyTabs.propTypes = {
 	onReloadData: PropTypes.func,
 	deleteMessage: PropTypes.string,
 	deleteDescription: PropTypes.string,
+	searchPlaceholder: PropTypes.string,
 }
 
 
@@ -373,7 +374,8 @@ export default function MyTabs(
 		deleteMessage,
 		deleteDescription,
 		actionsButton,
-		onDeleteItems
+		onDeleteItems,
+		searchPlaceholder
 	}) {
 	const [deleteDialog, setDeleteDialog] = useState(false);
 	const [isLoadingDelete, setIsLoadingDelete] = useState(false);
@@ -448,7 +450,7 @@ export default function MyTabs(
 	return <>
 		<ListToolBar
 			isLoading={isLoading}
-			placeholder="Rechercher une texture"
+			placeholder={searchPlaceholder}
 			numSelected={selected.length}
 			filterName={filterName}
 			onFilterName={handleFilterByName}

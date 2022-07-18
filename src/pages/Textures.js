@@ -348,6 +348,7 @@ export default function Textures() {
 					onReloadData={loadData}
 					deleteMessage="Vous voulez vraiment supprimer ces textures ?"
 					deleteDescription="La suppression de cette texture de tous ce qui les composes !"
+					searchPlaceholder="Rechercher un type de texture..."
 				/>
 			</Card>
 		</Container>
