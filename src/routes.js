@@ -34,6 +34,8 @@ export default function Router({isLogIn = false}) {
         { path: 'textures/list', element: <Textures /> },
         { path: 'textures/form', element: <RegisterTexture /> },
         { path: 'equipments/form', element: <RegisterEquipment /> },
+        { path: 'equipments/form/:id', element: <RegisterEquipment /> },
+        { path: 'equipments/list', element: <RegisterEquipment /> },
         { path: 'textures/form/:id', element: <UpdateTexture /> },
         { path: 'blog', element: <Blog /> },
         { path: '', element: <Navigate to="/dashboard/app" /> },

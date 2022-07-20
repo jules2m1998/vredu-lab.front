@@ -3,7 +3,7 @@ import {useCallback, useEffect, useState} from "react";
 import {Container, Stack, Typography} from "@mui/material";
 import TextureForm from "../components/TextureForm";
 import Page from "../components/Page";
-import Loader from "../components/Loader";
+import Loader from "../components/Loaders/Loader";
 import useGet from "../hooks/useGet";
 
 export const UpdateTexture = () => {

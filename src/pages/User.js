@@ -27,7 +27,7 @@ import SearchNotFound from '../components/SearchNotFound';
 import {UserListHead, UserListToolbar, UserMoreMenu} from '../sections/@dashboard/user';
 // mock
 import USERLIST from '../_mock/user';
-import Loader from "../components/Loader";
+import Loader from "../components/Loaders/Loader";
 import {RequestContext} from "../http/RequestProvider";
 
 // ----------------------------------------------------------------------

@@ -6,7 +6,7 @@ import {useSnackbar} from "notistack";
 import Page from "../components/Page";
 import {RegisterForm} from "../sections/auth/register";
 import {ContentStyle} from "../style";
-import Loader from "../components/Loader";
+import Loader from "../components/Loaders/Loader";
 import {RequestContext} from "../http/RequestProvider";
 
 export default function UserForm() {

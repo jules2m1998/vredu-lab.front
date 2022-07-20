@@ -41,3 +41,25 @@ export const ContentStyle = styled('div')(() => ({
 	justifyContent: 'center',
 	flexDirection: 'column',
 }));
+
+
+
+export const ContentStyleLoad = styled('div')(({theme}) => ({
+    margin: 'auto',
+    minWidth: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'column',
+    padding: theme.spacing(12, 0)
+}));
+
+
+export const Select = styled('div')(({theme, error}) => ({
+	display: "flex",
+	border: `1px solid ${error ? theme.palette.error.light : "rgba(0,0,0,.15)"}`,
+	width: "100%",
+	padding: 8,
+	flexWrap: "wrap",
+	gap: 2
+}))

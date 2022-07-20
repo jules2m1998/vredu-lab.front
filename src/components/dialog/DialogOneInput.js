@@ -5,8 +5,8 @@ import {yupResolver} from "@hookform/resolvers/yup/dist/yup";
 import * as Yup from "yup";
 import {useCallback, useMemo} from "react";
 import PropTypes from "prop-types";
-import {FormProvider, RHFTextField} from "./hook-form";
-import useSnack from "../hooks/useSnack";
+import {FormProvider, RHFTextField} from "../hook-form";
+import useSnack from "../../hooks/useSnack";
 
 DialogOneInput.propTypes = {
 	onSubmit: PropTypes.func,

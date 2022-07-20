@@ -21,7 +21,7 @@ import {cloneElement, useCallback, useMemo, useRef, useState} from "react";
 import PropTypes from "prop-types";
 import {styled} from "@mui/material/styles";
 import Iconify from "./Iconify";
-import Loader from "./Loader";
+import Loader from "./Loaders/Loader";
 import Scrollbar from "./Scrollbar";
 import SearchNotFound from "./SearchNotFound";
 import {applySortFilter, getComparator} from "../utils/object";

@@ -10,7 +10,7 @@ import MyCard from "./MyCard";
 import {toFormData} from "../utils/object";
 import {RequestContext} from "../http/RequestProvider";
 import {FormProvider, RHFTextField} from "./hook-form";
-import {DialogOneInput} from "./DialogOneInput";
+import {DialogOneInput} from "./dialog/DialogOneInput";
 import ImgFileDrag from "./ImgFileDrag";
 import useSnack from "../hooks/useSnack";
 import {HTTP_CONFIG} from "../http/request";
@@ -70,7 +70,6 @@ export default function TextureForm({texture = {}, onSetTexture = null}) {
 	const {handleSubmit, formState: {isSubmitting}} = useMemo(() => (methods), [methods])
 	
 	const onSubmit = useCallback(async (e) => {
-		
 		if (!texture?.id) {
 			const formData = toFormData({...e, GroupId: groupActive, Image: file})
 			if (!file || !groupActive) return
@@ -178,8 +177,12 @@ export default function TextureForm({texture = {}, onSetTexture = null}) {
 									loading={isSubmitting}
 									onDeleteOne={handleDeleteGroup}
 								/>
-								<LoadingButton size="large" onClick={handleVerify} type="submit" variant="contained"
-								               loading={isSubmitting}>
+								<LoadingButton
+									size="large"
+									onClick={handleVerify}
+									type="submit"
+									variant="contained"
+									loading={isSubmitting}>
 									{
 										texture?.id ? "Modifier" : "Enregistrer"
 									}
