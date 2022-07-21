@@ -1,5 +1,6 @@
 import {FormControl, FormLabel, Grid} from "@mui/material";
 import {useCallback, useEffect, useMemo, useState} from "react";
+import {useNavigate} from "react-router-dom";
 import PropTypes from "prop-types";
 import * as Yup from "yup";
 import MyCard from "./MyCard";
@@ -38,6 +39,7 @@ export default function EquipmentForm({current = {}}) {
 	const putMethod = usePut()
 	const deleteMethod = useDelete()
 	const snack = useSnack()
+	const navigate = useNavigate()
 	
 	const dv = useMemo(() => [
 		{
@@ -103,18 +105,18 @@ export default function EquipmentForm({current = {}}) {
 		if (!current) {
 			const data = toFormData(equipment)
 			const re = await postMethod("Equipment", "Enregistrement effectuee avec success !", {data})
-			console.log(re)
+			if (re) navigate("/dashboard/equipments/list")
 		} else {
 			const diff = getDiff(equipment,toUpper({...current, isConstraint: current.isConstraint === 'true'}))
 			if (Object.entries(diff).length > 0) {
 				const re = await putMethod("Equipment", "Modifcation effextuee !", {data: toFormData({...diff, Id: current.id})})
-				console.log(re)
+				if (re) navigate("/dashboard/equipments/list")
 			} else {
 				snack("Aucune modification effectuee !", {variant: "warning"})
 			}
 		}
 		setLoading(false)
-	}, [active, current, file, postMethod, putMethod, snack]);
+	}, [active, current, file, navigate, postMethod, putMethod, snack]);
 	
 	const handleVerify = useCallback(() => {
 		if (!file) setError("Fichier obligatoire")

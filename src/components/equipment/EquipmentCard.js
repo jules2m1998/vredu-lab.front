@@ -1,5 +1,17 @@
 import PropTypes from "prop-types";
-import {Card, CardContent, Dialog, DialogContent, DialogTitle, Grid, Link, Stack, Typography} from "@mui/material";
+import {
+	Box,
+	Card,
+	CardContent,
+	Chip,
+	Dialog,
+	DialogContent,
+	DialogTitle,
+	Grid,
+	Link,
+	Stack,
+	Typography
+} from "@mui/material";
 import {styled} from "@mui/material/styles";
 import {useCallback, useMemo, useState} from "react";
 import {Link as RouterLink} from "react-router-dom";
@@ -7,10 +19,9 @@ import {MoreAction} from "../GenericArrays";
 import {ICON} from "../../utils/const";
 import Screen3D from "../3d/Screen3D";
 import {toServerPath} from "../../utils/string";
-
-const Img = styled("div")({
-	height: 200,
-})
+import Iconify from "../Iconify";
+import useDelete from "../../hooks/useDelete";
+import ConfirmAlert from "../ConfirmAlert";
 
 const TitleStyle = styled(Link)({
 	overflow: 'hidden',
@@ -20,12 +31,22 @@ const TitleStyle = styled(Link)({
 	textTransform: "uppercase"
 });
 
-export default function EquipmentCard({item}) {
+export default function EquipmentCard({item, onDelete}) {
 	const [open, setOpen] = useState(false);
-	const {file, name, description, id} = useMemo(() => item, [item])
+	const [openDelete, setOpenDelete] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const {file, name, description, id, typeEffect, isConstraint} = useMemo(() => item, [item])
+	const deleteMethod = useDelete()
 	
 	const handleOpen = useCallback(() => setOpen(true), [])
 	const handleClose = useCallback(() => setOpen(false), [])
+	const handleDelete = useCallback(async () => {
+		setLoading(true)
+		await deleteMethod(`Equipment/${id}`, "Suppression effectuee avec succees")
+		await onDelete()
+		setLoading(false)
+		setOpenDelete(false)
+	}, [deleteMethod, id, onDelete]);
 	
 	const menu = useMemo(() => [
 		{
@@ -42,7 +63,7 @@ export default function EquipmentCard({item}) {
 			title: "Supprimer",
 			icon: ICON.delete,
 			color: "text.accent",
-			onClick: () => null
+			onClick: () => setOpenDelete(true)
 		}
 	], [handleOpen, id])
 	
@@ -62,8 +83,24 @@ export default function EquipmentCard({item}) {
 						</TitleStyle>
 						<MoreAction menus={menu}/>
 					</Stack>
-					<Typography sx={{color: "text.secondary"}} variant="body2" gutterBottom>
+					{isConstraint ?
+						<Chip
+							variant="outlined"
+							color="warning"
+							size="small"
+							label="Protection"
+							icon={<Iconify icon={ICON.protect}/>}/> :
+						<Chip
+							variant="outlined"
+							size="small"
+							label="Materiel de laboratoire"
+							icon={<Iconify icon={ICON.labTools}/>}/>
+					}
+					<Typography sx={{color: "text.secondary", mt: 1}} variant="body2" gutterBottom>
 						{description?.slice(0, 100)}{description?.length > 100 ? "..." : null}
+					</Typography>
+					<Typography variant="body2" gutterBottom>
+						Type d'effet : {typeEffect.name} ({typeEffect.unitySymbol})
 					</Typography>
 				</CardContent>
 			</Card>
@@ -77,19 +114,46 @@ export default function EquipmentCard({item}) {
 			>
 				<DialogTitle>{name}</DialogTitle>
 				<DialogContent>
-					<Screen3D file={toServerPath(file)} />
+					<Screen3D bg={0x003A52} bgOpacity={.2} file={toServerPath(file)}/>
+					<Box sx={{mt:1}}>
+						{isConstraint ?
+							<Chip
+								variant="outlined"
+								color="warning"
+								size="small"
+								label="Protection"
+								icon={<Iconify icon={ICON.protect}/>}/> :
+							<Chip
+								variant="outlined"
+								size="small"
+								label="Materiel de laboratoire"
+								icon={<Iconify icon={ICON.labTools}/>}/>
+						}
+					</Box>
 					<Typography align="justify" sx={{color: "text.secondary", mt: 2}} variant="h6" gutterBottom>
 						Description
 					</Typography>
 					<Typography align="justify" variant="body2" gutterBottom>
 						{description}
 					</Typography>
+					<Typography variant="body2" gutterBottom>
+						Type d'effet : {typeEffect.name} ({typeEffect.unitySymbol})
+					</Typography>
 				</DialogContent>
 			</Dialog>
 		}
+		<ConfirmAlert
+			title={`Suppression de l'equipement : ${name}`}
+			description="Voulez-vous vraiment supprimer cet equipement ?"
+			open={openDelete}
+			onClose={() => setOpenDelete(false)}
+			onSuccess={handleDelete}
+			isLoading={loading}
+		/>
 	</>
 }
 
 EquipmentCard.propTypes = {
-	item: PropTypes.object
+	item: PropTypes.object,
+	onDelete: PropTypes.func,
 };

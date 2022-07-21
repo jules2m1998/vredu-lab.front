@@ -8,13 +8,13 @@ import EquipmentCard from "../components/equipment/EquipmentCard";
 
 export default function EquipmentList(){
   const [equipments, setEquipments] = useState([]);
-  const getMMethod = useGet()
+  const getMethod = useGet()
   
   const init = useCallback(async () => {
-    const data = await getMMethod("Equipment")
+    const data = await getMethod("Equipment")
     if (data) setEquipments(data)
     return data
-  }, [getMMethod]);
+  }, [getMethod]);
   
   useEffect(() => {
     init().then(console.log)
@@ -32,7 +32,7 @@ export default function EquipmentList(){
         </Stack>
         <Grid container spacing={3}>
           {
-            equipments.map((item, k) => <EquipmentCard key={k} item={item} />)
+            equipments.map((item, k) => <EquipmentCard onDelete={init} key={k} item={item} />)
           }
         </Grid>
       </Container>

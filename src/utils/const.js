@@ -5,4 +5,6 @@ export const ICON = {
 	delete: 'ep:delete',
 	imageAdd: 'bxs:image-add',
 	eye: 'akar-icons:eye',
+	protect: 'icon-park-outline:protect',
+	labTools: 'raphael:lab',
 }
