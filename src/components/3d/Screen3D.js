@@ -46,8 +46,8 @@ export default function Screen3D(
 	}) {
 	const [loading, setLoading] = useState(false);
 	const [progress, setProgress] = useState('');
-	const [closed, setClosed] = useState(false);
 	const divScene = useRef(null)
+	const an = useRef(0)
 	
 	const onLoadProgress = useCallback((xhr) => {
 		const evolution = (xhr.loaded / xhr.total) * 100
@@ -89,7 +89,7 @@ export default function Screen3D(
 			const {current: {offsetWidth, offsetHeight}} = divScene
 			const camera = new THREE.PerspectiveCamera(
 				75,
-				offsetWidth / offsetWidth,
+				offsetWidth / offsetHeight,
 				0.1,
 				1000
 			)
@@ -121,7 +121,7 @@ export default function Screen3D(
 			}
 			window.addEventListener('resize', onWindowResize, false)
 			const animate = () => {
-				requestAnimationFrame(animate)
+				an.current = requestAnimationFrame(animate)
 				controls.update()
 				render()
 			}
@@ -135,7 +135,9 @@ export default function Screen3D(
 	useEffect(() => {
 		loadFile().then(console.log)
 		
-		return () => setClosed(true)
+		return () => {
+			cancelAnimationFrame(an.current)
+		}
 	}, [loadFile]);
 	
 	return <Container border={isBorder} radius={radius} error={error}>
