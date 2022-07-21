@@ -13,7 +13,7 @@ import MySelectList from "./MySelectList";
 import DialogManyInputText from "./dialog/DialogManyInputText";
 import usePost from "../hooks/usePost";
 import usePut from "../hooks/usePut";
-import {getDiff, toFormData} from "../utils/object";
+import {getDiff, toFormData, toUpper} from "../utils/object";
 import useSnack from "../hooks/useSnack";
 import useDelete from "../hooks/useDelete";
 import {toServerPath} from "../utils/string";
@@ -25,8 +25,9 @@ Item.propTypes = {
 
 
 export default function EquipmentForm({current = {}}) {
-	const [file, setFile] = useState(null);
+	const [file, setFile] = useState(current?.file);
 	const [error, setError] = useState(null);
+	const [loading, setLoading] = useState(false);
 	const [openTypeDialog, setOpenTypeDialog] = useState(false);
 	const [errorType, setErrorType] = useState();
 	const [typeEffect, setTypeEffect] = useState([]);
@@ -54,7 +55,7 @@ export default function EquipmentForm({current = {}}) {
 		},
 		{
 			name: 'IsConstraint',
-			default: current?.isConstraint || "false" ,
+			default: current?.isConstraint || "false",
 			schema: Yup.string().required("Ce champs est obligatoire !")
 		},
 	], [current]);
@@ -97,11 +98,23 @@ export default function EquipmentForm({current = {}}) {
 	
 	const handleSubmit = useCallback(async (e) => {
 		if (!file || !active) return
-		const equipment = {...e, File: file, TypeEffectId: active}
-		const data = toFormData(equipment)
-		const re = await postMethod("Equipment", "Enregistrement effectuee avec success !", {data})
-		console.log(re)
-	}, [active, file, postMethod]);
+		setLoading(true)
+		const equipment = {...e, IsConstraint: e.IsConstraint === 'true', File: file, TypeEffectId: active}
+		if (!current) {
+			const data = toFormData(equipment)
+			const re = await postMethod("Equipment", "Enregistrement effectuee avec success !", {data})
+			console.log(re)
+		} else {
+			const diff = getDiff(equipment,toUpper({...current, isConstraint: current.isConstraint === 'true'}))
+			if (Object.entries(diff).length > 0) {
+				const re = await putMethod("Equipment", "Modifcation effextuee !", {data: toFormData({...diff, Id: current.id})})
+				console.log(re)
+			} else {
+				snack("Aucune modification effectuee !", {variant: "warning"})
+			}
+		}
+		setLoading(false)
+	}, [active, current, file, postMethod, putMethod, snack]);
 	
 	const handleVerify = useCallback(() => {
 		if (!file) setError("Fichier obligatoire")
@@ -149,21 +162,27 @@ export default function EquipmentForm({current = {}}) {
 		<Grid container spacing={2}>
 			<Grid item xs={5}>
 				<MyCard>
-					<FileDisplay3D defaultFile={current ? toServerPath(current?.file): ""} onSetFile={setFile} error={error} onSetError={setError}/>
+					<FileDisplay3D
+						defaultFile={current ? toServerPath(current?.file) : ""}
+						onSetFile={setFile}
+						error={error}
+						onSetError={setError}
+						disabled={loading}
+					/>
 				</MyCard>
 			</Grid>
 			<Grid item xs={7} alignSelf="end">
 				<MyCard>
 					<FormGenerator fields={dv} onSubmit={handleSubmit} onVerify={handleVerify} btnText="Enregistrer">
-						<RHFTextField name="Name" label="Nom de l'equipemment"/>
-						<RHFTextField multiline name="Description" label="Nom de l'equipemment"/>
+						<RHFTextField disabled={loading} name="Name" label="Nom de l'equipemment"/>
+						<RHFTextField disabled={loading} multiline name="Description" label="Description de l'equipemment"/>
 						<FormControl>
 							<FormLabel>Type d'equipement</FormLabel>
 							<RHFRadio
 								name="IsConstraint"
 							>
-								<RadioItem value="true" label="Contrainte avant la reaction"/>
-								<RadioItem value="false" label="Materiel pour reaction"/>
+								<RadioItem disabled={loading} value="true" label="Contrainte avant la reaction"/>
+								<RadioItem disabled={loading} value="false" label="Materiel pour reaction"/>
 							</RHFRadio>
 						</FormControl>
 						<FormControl>
@@ -179,6 +198,7 @@ export default function EquipmentForm({current = {}}) {
 								onDeleteOne={handleDeleteType}
 								deleteAlertTitle="Suppression d'un type d'effet ?"
 								deleteAlertContent="Sa suppression entrainera celle de tous les elements en rapprot ?"
+								loading={loading}
 							/>
 						</FormControl>
 					</FormGenerator>

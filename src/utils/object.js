@@ -43,3 +43,7 @@ export function getComparator(order, orderBy) {
 		? (a, b) => descendingComparator(a, b, orderBy)
 		: (a, b) => -descendingComparator(a, b, orderBy);
 }
+
+export function toUpper(obj) {
+	return Object.entries(obj).reduce((acc, [k, v]) => ({...acc, [k.charAt(0).toUpperCase() + k.slice(1)]: v}), {})
+}

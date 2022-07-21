@@ -18,7 +18,7 @@ export default function RegisterEquipment() {
 		const data = await getMethod(`Equipment/${id}`)
 		if (data) {
 			const {name, description, isConstraint, file} = data
-			setCurrent({name, description,typeEffectId: data.typeEffect?.id , isConstraint, file})
+			setCurrent({name, description,typeEffectId: data.typeEffect?.id , isConstraint: isConstraint.toString(), file, id})
 			return data
 		}
 		return null
