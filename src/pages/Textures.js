@@ -42,16 +42,17 @@ const Img = styled("img")(() => ({
 	maxHeight: 30
 }))
 
-const Row = ({
-	             item,
-	             isItemSelected,
-	             onSelected,
-	             isSetLoading,
-	             selected,
-	             onListSelected,
-	             onReloadData,
-	             onDeleteItems
-             }) => {
+const Row = (
+	{
+		item,
+		isItemSelected,
+		onSelected,
+		isSetLoading,
+		selected,
+		onListSelected,
+		onReloadData,
+		onDeleteItems
+	}) => {
 	const [open, setOpen] = useState(true);
 	const [openDialog, setOpenDialog] = useState(false);
 	const {name, data, id} = useMemo(() => item, [item])

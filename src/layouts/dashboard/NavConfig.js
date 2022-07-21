@@ -73,7 +73,7 @@ const navConfig = [
         children: [
             {
                 title: 'Liste',
-                path: '/dashboard/textures/list'
+                path: '/dashboard/equipments/list'
             },
             {
                 title: 'Creer',

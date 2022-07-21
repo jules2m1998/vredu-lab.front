@@ -69,19 +69,21 @@ export const MoreAction = ({menus}) => {
 				transformOrigin={{vertical: 'top', horizontal: 'right'}}
 			>
 				{
-					menus.map(({
-						           title,
-						           icon,
-						           link,
-						           color,
-						           onClick
-					           }, k) => {
-						if (onClick) return (<MenuItem key={k} sx={{color: color || "text.primary"}} onClick={() => handleClick(onClick)}>
-							<ListItemIcon sx={{color: color || "text.primary"}}>
-								<Iconify icon={icon} width={24} height={24}/>
-							</ListItemIcon>
-							<ListItemText primary={title} primaryTypographyProps={{variant: 'body2'}}/>
-						</MenuItem>)
+					menus.map((
+						{
+							title,
+							icon,
+							link,
+							color,
+							onClick
+						}, k) => {
+						if (onClick) return (
+							<MenuItem key={k} sx={{color: color || "text.primary"}} onClick={() => handleClick(onClick)}>
+								<ListItemIcon sx={{color: color || "text.primary"}}>
+									<Iconify icon={icon} width={24} height={24}/>
+								</ListItemIcon>
+								<ListItemText primary={title} primaryTypographyProps={{variant: 'body2'}}/>
+							</MenuItem>)
 						
 						return (<MenuItem key={k} component={RouterLink} to={link} sx={{color: color || "text.primary"}}>
 							<ListItemIcon>

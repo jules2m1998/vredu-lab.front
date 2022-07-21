@@ -4,4 +4,5 @@ export const ICON = {
 	update: "eva:edit-2-outline",
 	delete: 'ep:delete',
 	imageAdd: 'bxs:image-add',
+	eye: 'akar-icons:eye',
 }

@@ -6,9 +6,9 @@ import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 import PropTypes from "prop-types";
 import LoaderHash from "../Loaders/LoaderHash";
 
-const Div = styled('div')(({hidden}) => ({
+const Div = styled('div')(({hidden, height}) => ({
 	width: '100%',
-	minHeight: 300,
+	minHeight: height,
 	visibility: hidden ? "hidden" : "visible"
 }))
 
@@ -26,17 +26,27 @@ const Abs = styled('div')(() => ({
 	background: "white"
 }))
 
-const Container = styled('div')(({theme,error}) => ({
-	borderRadius: 8,
+const Container = styled('div')(({theme, error, border, radius}) => ({
+	borderRadius: radius,
 	overflow: "hidden",
 	width: "100%",
 	position: "relative",
-	border: `1px solid ${!error ? "#0000001f" : theme.palette.error.main }`
+	border: border ? `1px solid ${!error ? "#0000001f" : theme.palette.error.main}` : "none"
 }))
 
-export default function Screen3D({file, error = null}) {
+export default function Screen3D(
+	{
+		file,
+		error = null,
+		minHeight = 300,
+		isBorder = true,
+		radius = 8,
+		bg = 0x000000,
+		bgOpacity = 0
+	}) {
 	const [loading, setLoading] = useState(false);
 	const [progress, setProgress] = useState('');
+	const [closed, setClosed] = useState(false);
 	const divScene = useRef(null)
 	
 	const onLoadProgress = useCallback((xhr) => {
@@ -70,7 +80,7 @@ export default function Screen3D({file, error = null}) {
 				}
 			})
 			const bbox = new THREE.Box3().setFromObject(gltf.scene);
-			const {x, y, } = bbox.getSize(new THREE.Vector3());
+			const {x, y,} = bbox.getSize(new THREE.Vector3());
 			
 			const light = new THREE.HemisphereLight(0xffffbb, 0x080820, 5);
 			scene.add(light);
@@ -91,7 +101,7 @@ export default function Screen3D({file, error = null}) {
 			renderer.shadowMap.enabled = true
 			renderer.outputEncoding = THREE.sRGBEncoding
 			renderer.setSize(offsetWidth, offsetHeight)
-			renderer.setClearColor(0x000000, 0)
+			renderer.setClearColor(bg, bgOpacity)
 			scene.add(gltf.scene)
 			divScene.current.innerHTML = ''
 			divScene.current.appendChild(renderer.domElement)
@@ -120,14 +130,16 @@ export default function Screen3D({file, error = null}) {
 		} catch (e) {
 			return e
 		}
-	}, [file, onLoadProgress]);
+	}, [bg, bgOpacity, file, onLoadProgress]);
 	
 	useEffect(() => {
 		loadFile().then(console.log)
+		
+		return () => setClosed(true)
 	}, [loadFile]);
 	
-	return <Container error={error}>
-		<Div ref={divScene}/>
+	return <Container border={isBorder} radius={radius} error={error}>
+		<Div height={minHeight} ref={divScene}/>
 		{loading && <Abs><LoaderHash text={progress}/></Abs>}
 	</Container>
 }
@@ -135,4 +147,9 @@ export default function Screen3D({file, error = null}) {
 Screen3D.propTypes = {
 	file: PropTypes.string.isRequired,
 	error: PropTypes.string,
+	minHeight: PropTypes.number,
+	isBorder: PropTypes.bool,
+	radius: PropTypes.number,
+	bg: PropTypes.number,
+	bgOpacity: PropTypes.number,
 };
