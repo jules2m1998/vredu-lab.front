@@ -11,6 +11,7 @@ import account from '../../_mock/account';
 import {connectedUser, logout} from "../../store/user";
 import palette from "../../theme/palette";
 import Iconify from "../../components/Iconify";
+import {toServerPath} from "../../utils/string";
 
 // ----------------------------------------------------------------------
 const MENU_OPTIONS = [
@@ -72,7 +73,7 @@ export default function AccountPopover() {
                     }),
                 }}
             >
-                <Avatar src={user.image || account.photoURL} alt="photoURL"/>
+                <Avatar src={user?.image ? toServerPath(user?.image) : account.photoURL} alt="photoURL"/>
             </IconButton>
 
             <MenuPopover

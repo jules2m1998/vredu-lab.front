@@ -16,6 +16,7 @@ import NavSection from '../../components/NavSection';
 //
 import navConfig from './NavConfig';
 import {connectedUser} from "../../store/user";
+import {toServerPath} from "../../utils/string";
 
 // ----------------------------------------------------------------------
 
@@ -71,7 +72,7 @@ export default function DashboardSidebar({isOpenSidebar, onCloseSidebar}) {
             <Box sx={{mb: 5, mx: 2.5}}>
                 <Link underline="none" component={RouterLink} to="#">
                     <AccountStyle>
-                        <Avatar src={user.image || account.photoURL} alt="photoURL"/>
+                        <Avatar src={user?.image ? toServerPath(user?.image) : account.photoURL} alt="photoURL"/>
                         <Box sx={{ml: 2}}>
                             <Typography variant="subtitle2" sx={{color: 'text.primary'}}>
 

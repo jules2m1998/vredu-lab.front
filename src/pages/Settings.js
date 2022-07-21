@@ -1,4 +1,16 @@
-import {Box, Container, Stack, Tabs, Tab, Typography, MenuItem, InputAdornment, IconButton, Card} from "@mui/material";
+import {
+	Box,
+	Container,
+	Stack,
+	Tabs,
+	Tab,
+	Typography,
+	MenuItem,
+	InputAdornment,
+	IconButton,
+	Card,
+	Grid
+} from "@mui/material";
 import PropTypes from "prop-types";
 import {useCallback, useContext, useMemo, useState} from "react";
 import {LoadingButton} from "@mui/lab";
@@ -14,6 +26,8 @@ import {RHFSelect} from "../components/hook-form/RHFSelect";
 import {connectedUser, updateUser} from "../store/user";
 import {getDiff, toFormData} from "../utils/object";
 import {RequestContext} from "../http/RequestProvider";
+import ImgFileDrag from "../components/ImgFileDrag";
+import usePut from "../hooks/usePut";
 
 function TabPanel(props) {
 	const {children, value, index, ...other} = props;
@@ -34,10 +48,12 @@ function TabPanel(props) {
 }
 
 function GeneralForm() {
-	
-	const request = useContext(RequestContext)
+	const [file, setFile] = useState(null);
 	const dispatch = useDispatch()
 	const {enqueueSnackbar} = useSnackbar()
+	const [errorMsg, setErrorMsg] = useState(null);
+	
+	const putMethod = usePut()
 	
 	const user = useSelector(connectedUser)
 	
@@ -59,23 +75,20 @@ function GeneralForm() {
 	
 	const onSubmit = useCallback(async (e) => {
 		const diff = getDiff(e, defaultValues, true)
+		if (file) diff.Image = file
+		
 		if (Object.keys(diff).length > 0) {
 			const formData = toFormData(diff)
-			const data = await request.fetch("/User", {
-				method: 'put',
-				body: formData,
-				successMsg: "Information modifies avec succes !"
-			})
+			const data = await putMethod("/User", "Information modifies avec succes !", {data: formData})
 			if (data) {
 				dispatch(updateUser(data))
 			}
 		} else {
 			enqueueSnackbar("Aucune information modifiee !", {variant: "warning"})
 		}
-	}, [defaultValues, dispatch, enqueueSnackbar, request])
+	}, [defaultValues, dispatch, enqueueSnackbar, file, putMethod])
 	
 	return <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-		
 		<Typography variant="h5" sx={{mb: 1}}>
 			Modifiez vos information
 		</Typography>
@@ -83,44 +96,55 @@ function GeneralForm() {
 			Saisissez vos informattions personnelles ci-dessous
 		</Typography>
 		
-		<Stack spacing={3}>
-			
-			<Stack direction={{xs: 'column', sm: 'row'}} spacing={2}>
-				<RHFTextField disabled={isSubmitting} name="firstName" label="First name"/>
-				<RHFTextField disabled={isSubmitting} name="lastName" label="Last name"/>
-			</Stack>
-			
-			<Stack direction={{xs: 'column', sm: 'row'}} spacing={2}>
-				<RHFTextField disabled={isSubmitting} name="userName" label="Nom d'utilisateur"/>
-				<RHFTextField disabled={isSubmitting} name="email" label="Adresse email"/>
-			</Stack>
-			
-			<Stack direction={{xs: 'column', sm: 'row'}} spacing={2}>
-				<RHFTextField disabled={isSubmitting} name="phoneNumber" label="Numero de telephone"/>
-				<RHFTextField
+		<Grid container spacing={2}>
+			<Grid item xs={3}>
+				<ImgFileDrag
 					disabled={isSubmitting}
-					name="birthDate"
-					id="date"
-					label="Date de naissance"
-					type="date"
-					InputLabelProps={{
-						shrink: true,
-					}}
+					loading={isSubmitting}
+					onChange={setFile}
+					defaultImage={user?.image}
+					errorMsg={errorMsg}
+					onResetErrorMsg={() =>  setErrorMsg(null)}
 				/>
-			</Stack>
-			<RHFSelect disabled={isSubmitting} name="sex" label="Sexe">
-				<MenuItem selected>Selectionner</MenuItem>
-				<MenuItem selected value={0}>Masculin</MenuItem>
-				<MenuItem value={1}>Feminin</MenuItem>
-			</RHFSelect>
-			
-			<Stack alignItems="end">
-				
-				<LoadingButton size="large" type="submit" variant="contained" loading={isSubmitting}>
-					Enregistrer
-				</LoadingButton>
-			</Stack>
-		</Stack>
+			</Grid>
+			<Grid item xs={9}>
+				<Stack spacing={3}>
+					
+					<Stack direction={{xs: 'column', sm: 'row'}} spacing={2}>
+						<RHFTextField disabled={isSubmitting} name="firstName" label="First name"/>
+						<RHFTextField disabled={isSubmitting} name="lastName" label="Last name"/>
+					</Stack>
+					<Stack direction={{xs: 'column', sm: 'row'}} spacing={2}>
+						<RHFTextField disabled={isSubmitting} name="userName" label="Nom d'utilisateur"/>
+						<RHFTextField disabled={isSubmitting} name="email" label="Adresse email"/>
+					</Stack>
+					<Stack direction={{xs: 'column', sm: 'row'}} spacing={2}>
+						<RHFTextField disabled={isSubmitting} name="phoneNumber" label="Numero de telephone"/>
+						<RHFTextField
+							disabled={isSubmitting}
+							name="birthDate"
+							id="date"
+							label="Date de naissance"
+							type="date"
+							InputLabelProps={{
+								shrink: true,
+							}}
+						/>
+					</Stack>
+					<RHFSelect disabled={isSubmitting} name="sex" label="Sexe">
+						<MenuItem selected>Selectionner</MenuItem>
+						<MenuItem selected value={0}>Masculin</MenuItem>
+						<MenuItem value={1}>Feminin</MenuItem>
+					</RHFSelect>
+					<Stack alignItems="end">
+						
+						<LoadingButton size="large" type="submit" variant="contained" loading={isSubmitting}>
+							Enregistrer
+						</LoadingButton>
+					</Stack>
+				</Stack>
+			</Grid>
+		</Grid>
 	</FormProvider>
 }
 
