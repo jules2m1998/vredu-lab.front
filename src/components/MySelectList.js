@@ -4,8 +4,9 @@ import {useCallback, useState} from "react";
 import PropTypes from "prop-types";
 import Iconify from "./Iconify";
 import {ICON} from "../utils/const";
-import {DialogOneInput} from "./DialogOneInput";
+import {DialogOneInput} from "./dialog/DialogOneInput";
 import ConfirmAlert from "./ConfirmAlert";
+import {Select} from "../style";
 
 const List = styled('div')(({theme}) => ({
 	display: "flex",
@@ -19,42 +20,50 @@ const List = styled('div')(({theme}) => ({
 	}
 }))
 
-const Select = styled('div')(({theme, error}) => ({
-	display: "flex",
-	border: `1px solid ${error ? theme.palette.error.light : "rgba(0,0,0,.15)"}`,
-	width: "100%",
-	padding: 8,
-	flexWrap: "wrap",
-	gap: 2
-}))
 
-
-const OneGroup = ({name, id, onEdit, onSelected, active, onResetError, loading, onDelete}) => {
+const OneGroup = (
+	{
+		item,
+		onEdit,
+		onSelected,
+		active,
+		onResetError,
+		loading,
+		onDelete,
+		content = null,
+		onOpenDialog = null,
+		deleteAlertTitle = `Voulez vous vraiment supprimer le groupe de texture ${item.name} ?`,
+		deleteAlertContent = "Sa suppression entrainera aussi celle des texture de ce group !",
+	}) => {
 	const [open, setOpen] = useState(false)
 	const [openDelete, setOpenDelete] = useState(false);
 	const [loadingDelete, setLoadingDelete] = useState(false);
 	
 	const handleSubmit = useCallback(async (v) => {
-		const isOk = await onEdit(id, v)
+		const isOk = await onEdit(item.id, v)
 		if (isOk) setOpen(false)
-	}, [id, onEdit])
+	}, [item, onEdit])
 	
 	const handleOpenDialog = useCallback((e) => {
 		e.stopPropagation()
-		setOpen(true)
-	}, [])
+		if (!onOpenDialog) {
+			setOpen(true)
+		} else {
+			onOpenDialog(item.id)
+		}
+	}, [item, onOpenDialog])
 	
 	const activate = useCallback(() => {
 		onResetError()
-		onSelected(id)
-	}, [id, onResetError, onSelected])
+		onSelected(item.id)
+	}, [item, onResetError, onSelected])
 	
 	const handleDelete = useCallback(async () => {
 		setLoadingDelete(true)
-		await onDelete(id)
+		await onDelete(item.id)
 		setLoadingDelete(false)
 		setOpenDelete(false)
-	}, [id, onDelete]);
+	}, [item, onDelete]);
 	
 	const handleClickOpenDeleteDialog = useCallback((e) => {
 		e.stopPropagation()
@@ -68,11 +77,11 @@ const OneGroup = ({name, id, onEdit, onSelected, active, onResetError, loading, 
 			focusVisible
 			divider
 			sx={{border: "1px solid rgba(0,0,0,.13)"}}
-			selected={active === id}
+			selected={active === item.id}
 			disabled={loading}
 		>
 			<Stack flex flexDirection="row" gap={2} alignItems="center" justifyContent="center">
-				{name}
+				{content || item.name}
 				<Stack flexDirection="row">
 					<IconButton size="small" onClick={handleClickOpenDeleteDialog}>
 						<Iconify icon={ICON.delete} sx={{color: "error.main"}}/>
@@ -90,14 +99,14 @@ const OneGroup = ({name, id, onEdit, onSelected, active, onResetError, loading, 
 			description="Changer la valeur ci-dessous pour modifier ce type"
 			onClose={() => setOpen(false)}
 			label="Nom du groupe"
-			value={name}
+			value={item.name}
 			onSubmit={handleSubmit}
 		/>}
 		{openDelete && <ConfirmAlert
 			open={openDelete}
 			onClose={() => setOpenDelete(false)}
-			title={`Voulez vous vraiment supprimer le groupe de texture ${name} ?`}
-			description="Sa suppression entraiinera aussi celle des texture de ce group !"
+			title={deleteAlertTitle}
+			description={deleteAlertContent}
 			onSuccess={handleDelete}
 			isLoading={loadingDelete}
 		/>}
@@ -105,19 +114,22 @@ const OneGroup = ({name, id, onEdit, onSelected, active, onResetError, loading, 
 }
 
 OneGroup.propTypes = {
-	name: PropTypes.string,
+	item: PropTypes.object,
 	onEdit: PropTypes.func,
 	onSelected: PropTypes.func,
 	onResetError: PropTypes.func,
 	onDelete: PropTypes.func,
-	id: PropTypes.number,
+	onOpenDialog: PropTypes.func,
 	loading: PropTypes.bool,
+	content: PropTypes.node,
 	active: PropTypes.number,
+	deleteAlertTitle: PropTypes.string,
+	deleteAlertContent: PropTypes.string,
 }
 
 
 MySelectList.propTypes = {
-	items: PropTypes.array,
+	items: PropTypes.array.isRequired,
 	onOneEdit: PropTypes.func,
 	onSelected: PropTypes.func,
 	onResetError: PropTypes.func,
@@ -125,7 +137,10 @@ MySelectList.propTypes = {
 	active: PropTypes.number,
 	loading: PropTypes.bool,
 	errorMsg: PropTypes.string,
-	onOpenAdd: PropTypes.func
+	onOpenAdd: PropTypes.func,
+	onOpenDialog: PropTypes.func,
+	deleteAlertTitle: PropTypes.string,
+	deleteAlertContent: PropTypes.string,
 }
 
 export default function MySelectList(
@@ -138,23 +153,29 @@ export default function MySelectList(
 		errorMsg,
 		onResetError,
 		loading,
-		onDeleteOne
+		onDeleteOne,
+		onOpenDialog = null,
+		deleteAlertTitle = null,
+		deleteAlertContent = null
 	}) {
 	return <List>
 		<Box>
 			<Select error={errorMsg ? 1 : 0}>
 				{
-					items.map(({id, name}, k) => (
-						<OneGroup
+					items.map((i, k) => (<OneGroup
 							disabled={loading}
-							id={id}
-							name={name}
+							item={i}
 							key={k}
 							onEdit={onOneEdit}
 							onSelected={onSelected}
 							active={active}
 							onResetError={onResetError}
 							onDelete={onDeleteOne}
+							loading={loading}
+							content={i.content}
+							onOpenDialog={onOpenDialog}
+							deleteAlertTitle={deleteAlertTitle}
+							deleteAlertContent={deleteAlertContent}
 						/>
 					))
 				}

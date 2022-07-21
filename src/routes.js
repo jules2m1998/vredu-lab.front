@@ -14,6 +14,8 @@ import Settings from "./pages/Settings";
 import Textures from "./pages/Textures";
 import RegisterTexture from "./pages/RegisterTexture";
 import {UpdateTexture} from "./pages/UpdateTexture";
+import RegisterEquipment from "./pages/RegisterEquipment";
+import EquipmentList from "./pages/EquipmentList";
 
 // ----------------------------------------------------------------------
 
@@ -31,8 +33,10 @@ export default function Router({isLogIn = false}) {
         { path: 'effects/list', element: <Settings /> },
         { path: 'effects/typeform', element: <Settings /> },
         { path: 'textures/list', element: <Textures /> },
-        { path: 'textures/typeform', element: <Settings /> },
         { path: 'textures/form', element: <RegisterTexture /> },
+        { path: 'equipments/form', element: <RegisterEquipment /> },
+        { path: 'equipments/form/:id', element: <RegisterEquipment /> },
+        { path: 'equipments/list', element: <EquipmentList /> },
         { path: 'textures/form/:id', element: <UpdateTexture /> },
         { path: 'blog', element: <Blog /> },
         { path: '', element: <Navigate to="/dashboard/app" /> },

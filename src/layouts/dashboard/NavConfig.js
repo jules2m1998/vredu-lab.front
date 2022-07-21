@@ -66,6 +66,23 @@ const navConfig = [
         ]
     },
     {
+        title: 'Equipements',
+        path: '/dashboard/equipments',
+        icon: getIcon('carbon:chemistry'),
+        admin: true,
+        children: [
+            {
+                title: 'Liste',
+                path: '/dashboard/equipments/list'
+            },
+            {
+                title: 'Creer',
+                path: '/dashboard/equipments/form'
+            },
+
+        ]
+    },
+    {
         title: 'Effets',
         path: '/dashboard/effects',
         icon: getIcon('icon-park-outline:application-effect'),
