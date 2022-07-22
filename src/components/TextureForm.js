@@ -9,7 +9,7 @@ import {LoadingButton} from "@mui/lab";
 import MyCard from "./MyCard";
 import {toFormData} from "../utils/object";
 import {RequestContext} from "../http/RequestProvider";
-import {FormProvider, RHFTextField} from "./hook-form";
+import {FormProvider, RHFCheckbox, RHFTextField} from "./hook-form";
 import {DialogOneInput} from "./dialog/DialogOneInput";
 import ImgFileDrag from "./ImgFileDrag";
 import useSnack from "../hooks/useSnack";
@@ -18,6 +18,7 @@ import MySelectList from "./MySelectList";
 import usePut from "../hooks/usePut";
 import useDelete from "../hooks/useDelete";
 import useGet from "../hooks/useGet";
+import WaterTextureScreen from "./3d/WaterTextureScreen";
 
 TextureForm.propTypes = {
 	texture: PropTypes.object,
@@ -55,19 +56,23 @@ export default function TextureForm({texture = {}, onSetTexture = null}) {
 	useEffect(reloadType, [reloadType])
 	
 	const defaultValues = useMemo(() => ({
-		Name: texture?.name || ""
+		Name: texture?.name || "",
+		IsLiquid: false,
+		
 	}), [texture])
 	
 	const RegisterSchema = Yup.object().shape({
-		Name: Yup.string().required('Nom obligatoire !')
+		Name: Yup.string().required('Nom obligatoire !'),
+		IsLiquid: Yup.string(),
 	});
 	
 	const methods = useForm({
 		defaultValues,
-		resolver: yupResolver(RegisterSchema)
+		resolver: yupResolver(RegisterSchema),
 	})
 	
-	const {handleSubmit, formState: {isSubmitting}} = useMemo(() => (methods), [methods])
+	const {handleSubmit, formState: {isSubmitting}, watch} = useMemo(() => (methods), [methods])
+	const watchShowAge = watch("IsLiquid", false);
 	
 	const onSubmit = useCallback(async (e) => {
 		if (!texture?.id) {
@@ -140,7 +145,7 @@ export default function TextureForm({texture = {}, onSetTexture = null}) {
 	}, [reloadType, request])
 	const handleDeleteGroup = useCallback(async (id) => {
 		await deleteMethod(`TextureGroup/${id}`, "Supression effectuee avec succes !")
-		if (texture?.group?.id === id){
+		if (texture?.group?.id === id) {
 			navigate("/dashboard/textures/list")
 		}
 		await getGroup()
@@ -148,23 +153,32 @@ export default function TextureForm({texture = {}, onSetTexture = null}) {
 	
 	return <>
 		<Grid container spacing={2}>
-			<Grid item xs={3}>
-				<MyCard>
-					<ImgFileDrag
-						disabled={isSubmitting}
-						errorMsg={errorMsg}
-						onChange={setFile}
-						onResetErrorMsg={() => setErrorMsg(null)}
-						defaultImage={texture?.image}
-						loading={isSubmitting}
-					/>
-				</MyCard>
+			<Grid item xs={5}>
+				{
+					!watchShowAge ?
+						<MyCard>
+							<ImgFileDrag
+								disabled={isSubmitting}
+								errorMsg={errorMsg}
+								onChange={setFile}
+								onResetErrorMsg={() => setErrorMsg(null)}
+								defaultImage={texture?.image}
+								loading={isSubmitting}
+							/>
+						</MyCard> :
+						<div>
+							<WaterTextureScreen radius={8}/>
+						</div>
+				}
 			</Grid>
-			<Grid item xs={9}>
+			<Grid item xs={7}>
 				<FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
 					<MyCard>
 						<Stack spacing={2}>
 							<RHFTextField disabled={isSubmitting} name="Name" label="Nom de la texture"/>
+							<div>
+								<RHFCheckbox name="IsLiquid" label="Texture liquide ?"/>
+							</div>
 							<Stack alignItems="end">
 								<MySelectList
 									items={types}

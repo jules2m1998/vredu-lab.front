@@ -80,7 +80,7 @@ export default function Screen3D(
 				}
 			})
 			const bbox = new THREE.Box3().setFromObject(gltf.scene);
-			const {x, y,} = bbox.getSize(new THREE.Vector3());
+			const {x, y, z} = bbox.getSize(new THREE.Vector3());
 			
 			const light = new THREE.HemisphereLight(0xffffbb, 0x080820, 5);
 			scene.add(light);
@@ -94,7 +94,8 @@ export default function Screen3D(
 				1000
 			)
 			const ratio = 1.5
-			camera.position.set(x * ratio, y * ratio, 0)
+			camera.position.set(x * ratio, y * ratio, z*ratio)
+			camera.lookAt(gltf.scene.position)
 			
 			const renderer = new THREE.WebGLRenderer({alpha: true})
 			renderer.physicallyCorrectLights = true
@@ -102,6 +103,8 @@ export default function Screen3D(
 			renderer.outputEncoding = THREE.sRGBEncoding
 			renderer.setSize(offsetWidth, offsetHeight)
 			renderer.setClearColor(bg, bgOpacity)
+			
+			gltf.scene.lookAt(camera.position)
 			scene.add(gltf.scene)
 			divScene.current.innerHTML = ''
 			divScene.current.appendChild(renderer.domElement)
