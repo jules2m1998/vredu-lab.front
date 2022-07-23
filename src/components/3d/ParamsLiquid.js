@@ -3,6 +3,7 @@ import {SketchPicker} from "react-color";
 import {Card, CardContent, Slider, Stack, Typography} from "@mui/material";
 import {styled} from "@mui/material/styles";
 import {useCallback, useState} from "react";
+import FileDrag from "../hook-form/FileDrag";
 
 const PickerBtn = styled("button")(({bg}) => ({
 	background: `rgba(${bg.r}, ${bg.g}, ${bg.b}, ${bg.a})`,
@@ -37,7 +38,10 @@ export default function ParamsLiquid(
 		reflectivity,
 		onReflectivityChange,
 		roughness,
-		onRoughnessChange
+		onRoughnessChange,
+		onTextureChange,
+		onPropChange,
+		textureFile
 	}) {
 	const [display, setDisplay] = useState(false);
 	
@@ -51,55 +55,90 @@ export default function ParamsLiquid(
 	
 	return <Card sx={{overflow: "visible"}}>
 		<CardContent>
-			<Stack spacing={3}>
-				<Stack>
-					<Typography variant="subtitle2" display="block" gutterBottom>Couleur et transparence</Typography>
-					<PickerBtn bg={color} onClick={handleDisplayOpen}/>
-					{display &&
-						<Color>
-							<Cover onClick={handleDisplayClose}/>
-							<SketchPicker color={color} onChange={onColorChange}/>
-						</Color>
-					}
+			<Stack spacing={5}>
+				<Stack spacing={3}>
+					<Stack>
+						<Typography variant="subtitle2" display="block" gutterBottom>Couleur et transparence</Typography>
+						<PickerBtn bg={color} onClick={handleDisplayOpen}/>
+						{display &&
+							<Color>
+								<Cover onClick={handleDisplayClose}/>
+								<SketchPicker color={color} onChange={onColorChange}/>
+							</Color>
+						}
+					</Stack>
+					<Stack>
+						<Typography variant="subtitle2" display="block" gutterBottom>Rugosité</Typography>
+						<Slider
+							aria-label="Temperature"
+							value={roughness}
+							step={.01}
+							color="secondary"
+							onChange={onRoughnessChange}
+							valueLabelDisplay="auto"
+							max={1}
+							min={0}
+						/>
+					</Stack>
+					<Stack>
+						<Typography variant="subtitle2" display="block" gutterBottom>Metalique</Typography>
+						<Slider
+							aria-label="Temperature"
+							value={metalness}
+							step={.01}
+							color="secondary"
+							valueLabelDisplay="auto"
+							onChange={onMetalnessChange}
+							max={1}
+							min={0}
+						/>
+					</Stack>
+					<Stack>
+						<Typography variant="subtitle2" display="block" gutterBottom>Réflexivité</Typography>
+						<Slider
+							aria-label="Temperature"
+							value={reflectivity}
+							step={.01}
+							color="secondary"
+							valueLabelDisplay="auto"
+							onChange={onReflectivityChange}
+							max={1}
+							min={0}
+						/>
+					</Stack>
 				</Stack>
-				<Stack>
-					<Typography variant="subtitle2" display="block" gutterBottom>Rugosité</Typography>
-					<Slider
-						aria-label="Temperature"
-						value={roughness}
-						step={.01}
-						color="secondary"
-						onChange={onRoughnessChange}
-						valueLabelDisplay="auto"
-						max={1}
-						min={0}
-					/>
-				</Stack>
-				<Stack>
-					<Typography variant="subtitle2" display="block" gutterBottom>Metalique</Typography>
-					<Slider
-						aria-label="Temperature"
-						value={metalness}
-						step={.01}
-						color="secondary"
-						valueLabelDisplay="auto"
-						onChange={onMetalnessChange}
-						max={1}
-						min={0}
-					/>
-				</Stack>
-				<Stack>
-					<Typography variant="subtitle2" display="block" gutterBottom>Réflexivité</Typography>
-					<Slider
-						aria-label="Temperature"
-						value={reflectivity}
-						step={.01}
-						color="secondary"
-						valueLabelDisplay="auto"
-						onChange={onReflectivityChange}
-						max={1}
-						min={0}
-					/>
+				<Stack spacing={3}>
+					<Stack>
+						<Typography variant="subtitle2" display="block" gutterBottom>Texture de couleur de base (base color)</Typography>
+						<FileDrag onChange={onTextureChange('map')}/>
+					</Stack>
+					<Stack>
+						<Typography variant="subtitle2" display="block" gutterBottom>Texture de couleur normale (normal)</Typography>
+						<FileDrag onChange={onTextureChange('normalMap')}/>
+					</Stack>
+					<Stack>
+						<Typography variant="subtitle2" display="block" gutterBottom>Texture de relief (height)</Typography>
+						<FileDrag onChange={onTextureChange('displacementMap')}/>
+						<Typography sx={{mt:1}} variant="subtitle2" display="block" gutterBottom>Niveau de relief</Typography>
+						<Slider
+							aria-label="Temperature"
+							value={textureFile.displacementScale}
+							step={.01}
+							color="secondary"
+							valueLabelDisplay="auto"
+							onChange={onPropChange("displacementScale")}
+							max={1}
+							min={0}
+						/>
+					</Stack>
+					<Stack>
+						<Typography variant="subtitle2" display="block" gutterBottom>Texture d'ombre (ambientOcclusion)</Typography>
+						<FileDrag onChange={onTextureChange('aoMap')}/>
+					</Stack>
+					<Stack>
+						<Typography variant="subtitle2" display="block" gutterBottom>Texture metalique (metallic)</Typography>
+						<FileDrag onChange={onTextureChange('metalnessMap')}/>
+					</Stack>
 				</Stack>
 			</Stack>
 		</CardContent>
@@ -115,4 +154,7 @@ ParamsLiquid.propTypes = {
 	onReflectivityChange: PropTypes.func.isRequired,
 	onRoughnessChange: PropTypes.func.isRequired,
 	onColorChange: PropTypes.func.isRequired,
+	onTextureChange: PropTypes.func,
+	onPropChange: PropTypes.func,
+	textureFile: PropTypes.object
 };

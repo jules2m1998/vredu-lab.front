@@ -11,7 +11,6 @@ import {toFormData} from "../utils/object";
 import {RequestContext} from "../http/RequestProvider";
 import {FormProvider, RHFCheckbox, RHFTextField} from "./hook-form";
 import {DialogOneInput} from "./dialog/DialogOneInput";
-import ImgFileDrag from "./ImgFileDrag";
 import useSnack from "../hooks/useSnack";
 import {HTTP_CONFIG} from "../http/request";
 import MySelectList from "./MySelectList";
@@ -29,8 +28,7 @@ export default function TextureForm({texture = {}, onSetTexture = null}) {
 	const [, setLoading] = useState(false)
 	const [groupActive, setGroupActive] = useState(null)
 	const [groupActiveError, setGroupActiveError] = useState(null)
-	const [errorMsg, setErrorMsg] = useState(null)
-	const [file, setFile] = useState(null)
+	const [file, ] = useState(null)
 	const [open, setOpen] = useState(false)
 	const [types, setTypes] = useState([])
 	const request = useContext(RequestContext)
@@ -122,7 +120,6 @@ export default function TextureForm({texture = {}, onSetTexture = null}) {
 		if (!texture?.id) {
 			if (!file) {
 				alert("L'image est oblgatoire !", {variant: "warning"})
-				setErrorMsg("L'image est obligatoire !")
 			}
 			if (!groupActive) {
 				setGroupActiveError("Le type de texture est obligatoire !")
@@ -154,22 +151,7 @@ export default function TextureForm({texture = {}, onSetTexture = null}) {
 	return <>
 		<Grid container spacing={2}>
 			<Grid item xs={5}>
-				{
-					!watchShowAge ?
-						<MyCard>
-							<ImgFileDrag
-								disabled={isSubmitting}
-								errorMsg={errorMsg}
-								onChange={setFile}
-								onResetErrorMsg={() => setErrorMsg(null)}
-								defaultImage={texture?.image}
-								loading={isSubmitting}
-							/>
-						</MyCard> :
-						<div>
-							<WaterTextureScreen radius={8}/>
-						</div>
-				}
+				<WaterTextureScreen radius={8} liquid={watchShowAge}/>
 			</Grid>
 			<Grid item xs={7}>
 				<FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
