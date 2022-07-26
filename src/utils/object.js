@@ -9,6 +9,10 @@ export function getDiff (obj1, obj2, upper = false) {
     }, {})
 }
 
+export function toSameAttr(same, different){
+	return Object.keys(same).reduce((acc, current) => ({...acc, [current]: different[current]}), {})
+}
+
 export function toFormData(obj){
     const formData = new FormData()
     Object.entries(obj).forEach(([k, v]) => formData.append(k,v))

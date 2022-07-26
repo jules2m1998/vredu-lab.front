@@ -2,6 +2,7 @@ import {useCallback, useMemo, useRef, useState} from "react";
 import PropTypes from "prop-types";
 import {Button, Typography} from "@mui/material";
 import {styled} from "@mui/material/styles";
+import {toServerPath} from "../../utils/string";
 
 const Div = styled('div')(() => ({
 	display: 'flex',
@@ -24,7 +25,14 @@ const Div = styled('div')(() => ({
 }))
 
 
-export default function FileDrag ({extensions = ["JPG", "PNG", "GIF"], onChange, defaultImg = '/default.png'}){
+export default function FileDrag(
+	{
+		extensions = ["JPG", "PNG", "GIF"],
+		onChange,
+		defaultImg,
+		disabled = false
+	}
+) {
 	const [name, setName] = useState(null);
 	const [file, setFile] = useState(null);
 	
@@ -43,17 +51,30 @@ export default function FileDrag ({extensions = ["JPG", "PNG", "GIF"], onChange,
 		const nbr = 50
 		if (!name) return null
 		if (name.length < nbr) return name
-		return `${name.slice(0,nbr)  }...`
+		return `${name.slice(0, nbr)}...`
 	}, [name]);
 	
+	const path = useMemo(() => {
+		if (file) return file
+		if (!defaultImg) return '/default.png'
+		if (defaultImg.startsWith("data:")) return defaultImg
+		return toServerPath(defaultImg)
+	}, [defaultImg, file]);
+	
+	const label = useMemo(() =>{
+		if (filename) return filename
+		if (defaultImg) return "Fichier existant !"
+		return 'Aucun fichier !'
+	}, [defaultImg, filename]);
+	
 	return <>
-		<input ref={input} accept={accept} type="file" onChange={handleChange} hidden />
+		<input ref={input} accept={accept} type="file" onChange={handleChange} hidden/>
 		<Div>
 			<div>
-				<Button onClick={handleOpen} size='small' variant="contained">Ajouter un fichier</Button>
-				<Typography variant="caption">{ filename || 'Aucun fichier !'}</Typography>
+				<Button disabled={disabled} onClick={handleOpen} size='small' variant="contained">Ajouter un fichier</Button>
+				<Typography variant="caption">{label}</Typography>
 			</div>
-			<img src={file || defaultImg} alt="Defaut" />
+			<img src={path} alt="Defaut"/>
 		</Div>
 	</>
 }
@@ -61,5 +82,6 @@ export default function FileDrag ({extensions = ["JPG", "PNG", "GIF"], onChange,
 FileDrag.propTypes = {
 	extensions: PropTypes.arrayOf(PropTypes.string),
 	onChange: PropTypes.func.isRequired,
+	disabled: PropTypes.bool,
 	defaultImg: PropTypes.string
 };

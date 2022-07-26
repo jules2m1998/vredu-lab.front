@@ -13,7 +13,6 @@ import UserForm from "./pages/UserForm";
 import Settings from "./pages/Settings";
 import Textures from "./pages/Textures";
 import RegisterTexture from "./pages/RegisterTexture";
-import {UpdateTexture} from "./pages/UpdateTexture";
 import RegisterEquipment from "./pages/RegisterEquipment";
 import EquipmentList from "./pages/EquipmentList";
 
@@ -37,7 +36,7 @@ export default function Router({isLogIn = false}) {
         { path: 'equipments/form', element: <RegisterEquipment /> },
         { path: 'equipments/form/:id', element: <RegisterEquipment /> },
         { path: 'equipments/list', element: <EquipmentList /> },
-        { path: 'textures/form/:id', element: <UpdateTexture /> },
+        { path: 'textures/form/:id', element: <RegisterTexture /> },
         { path: 'blog', element: <Blog /> },
         { path: '', element: <Navigate to="/dashboard/app" /> },
       ],

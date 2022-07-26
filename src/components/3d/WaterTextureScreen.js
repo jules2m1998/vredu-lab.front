@@ -3,11 +3,12 @@ import * as THREE from 'three'
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
 import {styled} from "@mui/material/styles";
 import PropTypes from "prop-types";
-import {Stack} from "@mui/material";
+import {Grid} from "@mui/material";
 import ParamsLiquid from "./ParamsLiquid";
 
 const Div = styled('div')(({radius}) => ({
 	width: '100%',
+	maxWidth: 400,
 	height: "100%",
 	minHeight: 300,
 	borderRadius: radius,
@@ -15,34 +16,24 @@ const Div = styled('div')(({radius}) => ({
 	background: 'rgba(42,52,129,0.45)'
 }))
 
-export default function WaterTextureScreen({radius = 0, liquid = false}) {
-	const [color, setColor] = useState({r: 238, g: 218, b: 218, a: 1});
-	const [metalness, setMetalness] = useState(0);
-	const [reflectivity, setReflectivity] = useState(0);
-	const [roughness, setRoughness] = useState(0);
-	const [texturesFile, setTexturesFile] = useState({displacementScale: 0});
-	const [txLoader, ] = useState(new THREE.TextureLoader())
+export default function WaterTextureScreen(
+	{
+		radius = 0,
+		defaultValue,
+		defaut,
+	}
+) {
+	const [texturesFile, setTexturesFile] = useState(defaultValue);
+	const [txLoader,] = useState(new THREE.TextureLoader())
+	const [liquid, setLiquid] = useState(defaut?.textureType === 0);
 	
 	const animation = useRef(0)
 	const divScene = useRef(null)
 	const refractionMaterial = useRef(null)
 	const sphere3D = useRef(null)
 	
-	const handleMetalness = useCallback((e, v) => {
-		setMetalness(v)
-		refractionMaterial.current.metalness = v
-	}, []);
-	const handleReflectivity = useCallback((e, v) => {
-		setReflectivity(v)
-		refractionMaterial.current.reflectivity = v
-	}, []);
-	const handleRoughness = useCallback((e, v) => {
-		setRoughness(v)
-		refractionMaterial.current.roughness = v
-	}, []);
-	
 	const handleColorChange = useCallback((e) => {
-		setColor(e.rgb)
+		setTexturesFile(tf => ({...tf, color: e.rgb}))
 		refractionMaterial.current.color.set(`rgb(${e.rgb.r}, ${e.rgb.g}, ${e.rgb.b})`)
 		refractionMaterial.current.opacity = e.rgb.a
 	}, []);
@@ -50,17 +41,17 @@ export default function WaterTextureScreen({radius = 0, liquid = false}) {
 	const handleTextureChange = useCallback((name) => (file) => {
 		setTexturesFile(tf => ({...tf, [name]: file}))
 		refractionMaterial.current[name] = txLoader.load(URL.createObjectURL(file))
-		if (name === "aoMap"){
+		if (name === "aoMap") {
 			sphere3D.current.geometry.attributes.uv2 = sphere3D.current.geometry.attributes.uv
 		}
 	}, [txLoader]);
 	
-	const handlePropChange = useCallback((name) => (e,value) => {
+	const handlePropChange = useCallback((name) => (e, value) => {
 		setTexturesFile(tf => ({...tf, [name]: value}))
 		refractionMaterial.current[name] = value
 	}, [])
 	
-	useEffect(() => {
+	const loadData = useCallback(async () => {
 		const {current: {offsetWidth, offsetHeight}} = divScene
 		const scene = new THREE.Scene()
 		const camera = new THREE.PerspectiveCamera(75, offsetWidth / offsetHeight, .1, 1000)
@@ -92,17 +83,35 @@ export default function WaterTextureScreen({radius = 0, liquid = false}) {
 		
 		const geometry = new THREE.SphereGeometry(2, 128, 128)
 		const base = geometry.attributes.position.array.slice()
-		refractionMaterial.current = new THREE.MeshPhysicalMaterial({
-			color: 0xff0000, // couleur
+		
+		let map = {
+			color: defaultValue.color, // couleur
 			envMap: refractionCube,
-			metalness: 1, // metalic
-			reflectivity: 0,
-			displacementScale: .05,
+			metalness: defaultValue.metalness, // metalic
+			displacementScale: defaultValue.displacementScale,
 			refractionRatio: .1,
-			roughness: 0, // rugosité
+			roughness: defaultValue.roughness, // rugosité
 			side: THREE.DoubleSide,
 			transparent: true,
-			opacity: 1 // opacity
+			opacity: 1, // opacity,
+		}
+		
+		if (defaut){
+			map = Object.entries(defaultValue).reduce((acc, [key, v]) => {
+				if (typeof v === 'string' && v?.startsWith("data:")) return {
+					...acc,
+					[key]: txLoader.load(v)
+				}
+				return {
+					...acc,
+					[key]: v
+				}
+			}, {})
+		}
+		
+		
+		refractionMaterial.current = new THREE.MeshPhysicalMaterial({
+			...map
 		})
 		
 		sphere3D.current = new THREE.Mesh(geometry, refractionMaterial.current)
@@ -141,31 +150,41 @@ export default function WaterTextureScreen({radius = 0, liquid = false}) {
 		}
 		
 		animate()
-		
+	}, [defaultValue, defaut, liquid, txLoader])
+	
+	useEffect(() => {
+		loadData()
 		return () => {
 			cancelAnimationFrame(animation.current)
 		}
-	}, [liquid]);
+	}, [loadData]);
 	
-	return <Stack spacing={2}>
-		<Div radius={radius} ref={divScene}/>
-		<ParamsLiquid
-			color={color}
-			metalness={metalness}
-			reflectivity={reflectivity}
-			roughness={roughness}
-			onColorChange={handleColorChange}
-			onMetalnessChange={handleMetalness}
-			onReflectivityChange={handleReflectivity}
-			onRoughnessChange={handleRoughness}
-			onTextureChange={handleTextureChange}
-			onPropChange={handlePropChange}
-			textureFile={texturesFile}
-		/>
-	</Stack>
+	return <Grid container spacing={2}>
+		<Grid item xs={4}>
+			<div>
+				<Div radius={radius} ref={divScene}/>
+			</div>
+		</Grid>
+		<Grid item xs={8}>
+			<ParamsLiquid
+				onColorChange={handleColorChange}
+				onTextureChange={handleTextureChange}
+				onPropChange={handlePropChange}
+				textureFile={texturesFile}
+				defaultValue={texturesFile}
+				setState={setLiquid}
+				liquid={liquid}
+				name={defaut?.name}
+				isUpdate={!!defaut}
+				defaut={defaut}
+			/>
+		</Grid>
+	</Grid>
 }
 
 WaterTextureScreen.propTypes = {
 	radius: PropTypes.number,
-	liquid: PropTypes.bool,
+	defaultValue: PropTypes.object,
+	name: PropTypes.string,
+	defaut: PropTypes.object,
 };
