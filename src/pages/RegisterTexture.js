@@ -5,6 +5,7 @@ import Page from "../components/Page";
 import WaterTextureScreen from "../components/3d/WaterTextureScreen";
 import Loader from "../components/Loaders/Loader";
 import useGet from "../hooks/useGet";
+import {getDecantObject} from "../utils/object";
 
 const defV = {
 	metalnessMap: null,
@@ -16,7 +17,8 @@ const defV = {
 	displacementMap: null,
 	displacementScale: .05,
 	aoMap: null,
-	color: 0xffffff
+	color: 0xffffff,
+	opacity: 1
 }
 export default function RegisterTexture() {
 	const {id} = useParams()
@@ -34,7 +36,8 @@ export default function RegisterTexture() {
 		if (id) {
 			setLoading(true)
 			getMethod(`Texture/${id}`).then(data => {
-				const copy = Object.keys(defV).reduce((acc, current) => ({...acc, [current]: data[current]}), {})
+				const value = getDecantObject(data, data.parent)
+				const copy = Object.keys(defV).reduce((acc, current) => ({...acc, [current]: value[current]}), {})
 				if (data) {
 					setDefaultV(data)
 					setName(data.name)
@@ -42,7 +45,8 @@ export default function RegisterTexture() {
 					setCurrent(
 						{
 							...copy,
-							color: `rgb(${data.color.r},${data.color.g},${data.color.b})`
+							color: `rgb(${data.color.r},${data.color.g},${data.color.b})`,
+							opacity: data.color.a
 						}
 					)
 				}

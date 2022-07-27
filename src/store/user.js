@@ -56,8 +56,8 @@ export const {loadUser, logout, updateUser, loginFailed, login} = counterSlice.a
 
 export const isConnected = state => state.auth.connected
 export const connectedUser = state => {
-    const {userName, lastName, firstName, email, phoneNumber, birthDate, sex, isAdmin, image } = state.auth.user
-    return {userName, lastName, firstName, email, phoneNumber, birthDate: moment(birthDate).format('YYYY-MM-DD'), sex, isAdmin, image}
+    const {userName, lastName, firstName, email, phoneNumber, birthDate, sex, isAdmin, image, id } = state.auth.user
+    return {id, userName, lastName, firstName, email, phoneNumber, birthDate: moment(birthDate).format('YYYY-MM-DD'), sex, isAdmin, image}
 }
 
 export default counterSlice.reducer

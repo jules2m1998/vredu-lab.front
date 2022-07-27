@@ -110,6 +110,7 @@ export default function EquipmentCard({item, onDelete}) {
 			<Dialog
 				open={open}
 				maxWidth="md"
+				fullWidth
 				onClose={handleClose}
 			>
 				<DialogTitle>{name}</DialogTitle>

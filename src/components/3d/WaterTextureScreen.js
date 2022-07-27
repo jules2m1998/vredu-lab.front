@@ -5,6 +5,7 @@ import {styled} from "@mui/material/styles";
 import PropTypes from "prop-types";
 import {Grid} from "@mui/material";
 import ParamsLiquid from "./ParamsLiquid";
+import {toServerPath} from "../../utils/string";
 
 const Div = styled('div')(({radius}) => ({
 	width: '100%',
@@ -85,33 +86,33 @@ export default function WaterTextureScreen(
 		const base = geometry.attributes.position.array.slice()
 		
 		let map = {
-			color: defaultValue.color, // couleur
 			envMap: refractionCube,
 			metalness: defaultValue.metalness, // metalic
 			displacementScale: defaultValue.displacementScale,
 			refractionRatio: .1,
 			roughness: defaultValue.roughness, // rugosité
 			side: THREE.DoubleSide,
-			transparent: true,
-			opacity: 1, // opacity,
 		}
 		
 		if (defaut){
 			map = Object.entries(defaultValue).reduce((acc, [key, v]) => {
-				if (typeof v === 'string' && v?.startsWith("data:")) return {
+				if (typeof v === 'string') return {
 					...acc,
-					[key]: txLoader.load(v)
+					[key]: txLoader.load(toServerPath(v))
 				}
 				return {
 					...acc,
 					[key]: v
 				}
 			}, {})
+			console.log(map)
 		}
 		
 		
 		refractionMaterial.current = new THREE.MeshPhysicalMaterial({
-			...map
+			...map,
+			color: defaultValue.color, // couleur
+			transparent: true
 		})
 		
 		sphere3D.current = new THREE.Mesh(geometry, refractionMaterial.current)

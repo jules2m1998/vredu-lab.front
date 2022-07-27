@@ -7,17 +7,13 @@ import * as Yup from "yup";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {LoadingButton} from "@mui/lab";
+import {useNavigate, useSearchParams} from "react-router-dom";
 import FileDrag from "../hook-form/FileDrag";
 import {FormProvider, RHFTextField} from "../hook-form";
 import {getDiff, toFormData, toUpper} from "../../utils/object";
 import usePost from "../../hooks/usePost";
 import usePut from "../../hooks/usePut";
-
-// const invert = ({r, g, b}) => ({
-// 	r: 255 - r,
-// 	g: 255 - g,
-// 	b: 255 - b,
-// })
+import useSnack from "../../hooks/useSnack";
 
 const PickerBtn = styled("button")(({bg}) => ({
 	background: typeof bg === 'number' ? `${bg}` : `rgba(${bg?.r}, ${bg?.g}, ${bg?.b}, ${bg?.a})`,
@@ -54,9 +50,13 @@ export default function ParamsLiquid(
 		defaut,
 	}) {
 	const [display, setDisplay] = useState(false);
+	const [searchParams] = useSearchParams();
 	
 	const postMethod = usePost()
 	const putMethod = usePut()
+	const snack = useSnack()
+	
+	const navigate = useNavigate()
 	
 	const handleDisplayOpen = useCallback((e) => {
 		e.preventDefault()
@@ -82,21 +82,47 @@ export default function ParamsLiquid(
 	})
 	
 	const onSubmit = useCallback(async (e) => {
-		if (!defaut) {
+		const isFork = searchParams.get("fork") === "true"
+		
+		if (isFork) {
+			const diff = getDiff({name: e.Name,...textureFile}, defaut)
+			delete diff.opacity
+			if (typeof diff.color === 'string') delete diff.color
+			if (!diff.name){
+				snack("Veillez donner un nom different a cette texture !", {variant: "warning"})
+			} else if (!Object.keys(diff).length) {
+				snack("Aucune modification apportee a la texture !", {variant: "warning"})
+			} else {
+				const value = {...diff, ...diff.color, ParentId: defaut.id}
+				delete value.color
+				console.log(toUpper(value))
+				const data = toFormData(toUpper(value))
+				const result = await postMethod("Texture", "Enregistrement effectue", {data})
+				if (result) navigate("/dashboard/textures/list")
+			}
+		} else if (!defaut) {
 			const data = toFormData(toUpper({...e, ...textureFile, TextureType: liquid ? 0 : 1, ...textureFile.color}))
 			const result = await postMethod("Texture", "Enregistrement effectue", {data})
-			console.log(result)
+			if (result) navigate("/dashboard/textures/list")
 		} else {
 			const txtCp = {...textureFile}
-			if (typeof txtCp.color === 'string'){
+			if (typeof txtCp.color === 'string') {
 				txtCp.color = defaut.color
 			}
-			const data = getDiff({name: e.Name, ...txtCp, textureType: liquid ? 0 : 1, ...txtCp.color}, {...defaut, ...defaut.color}, true)
+			const data = getDiff({
+				name: e.Name, ...txtCp,
+				textureType: liquid ? 0 : 1, ...txtCp.color
+			}, {...defaut, ...defaut.color}, true)
 			delete data.Color
-			const result = await putMethod(`Texture/${defaut.id}`, "Modification effectue", {data: toFormData(data)})
-			console.log(result)
+			delete data.Opacity
+			if (Object.keys(data).length === 0) {
+				snack("Aucune modification apportee a la texture !", {variant: "warning"})
+			} else {
+				const result = await putMethod(`Texture/${defaut.id}`, "Modification effectue", {data: toFormData(data)})
+				if (result) navigate("/dashboard/textures/list")
+			}
 		}
-	}, [defaut, liquid, postMethod, putMethod, textureFile])
+	}, [defaut, liquid, navigate, postMethod, putMethod, searchParams, snack, textureFile])
 	
 	const handleLiquid = useCallback((e) => {
 		setState(e.target.checked)
@@ -114,13 +140,18 @@ export default function ParamsLiquid(
 						</Stack>
 						<Stack>
 							<div>
-								<FormControlLabel disabled={isSubmitting} value={liquid} onChange={handleLiquid} control={<Checkbox defaultChecked={liquid}/>}
-								                  label="Texture liquide ?"/>
+								<FormControlLabel
+									disabled={isSubmitting}
+									value={liquid}
+									onChange={handleLiquid}
+									control={<Checkbox defaultChecked={liquid}/>}
+									label="Texture liquide ?"/>
 							</div>
 						</Stack>
 						<Stack>
 							<Typography variant="subtitle2" display="block" gutterBottom>Couleur et transparence</Typography>
-							<PickerBtn disabled={isSubmitting} bg={textureFile.color || defaultValue.color} onClick={handleDisplayOpen}/>
+							<PickerBtn disabled={isSubmitting} bg={textureFile.color || defaultValue.color}
+							           onClick={handleDisplayOpen}/>
 							{display &&
 								<Color>
 									<Cover onClick={handleDisplayClose}/>
@@ -184,7 +215,8 @@ export default function ParamsLiquid(
 						<Stack>
 							<Typography variant="subtitle2" display="block" gutterBottom>Texture de couleur normale
 								(normal)</Typography>
-							<FileDrag onChange={onTextureChange('normalMap')}/>
+							<FileDrag disabled={isSubmitting} defaultImg={defaultValue.normalMap}
+							          onChange={onTextureChange('normalMap')}/>
 						</Stack>
 						<Stack>
 							<Typography variant="subtitle2" display="block" gutterBottom>Texture de relief (height)</Typography>

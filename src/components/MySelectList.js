@@ -159,7 +159,7 @@ export default function MySelectList(
 		deleteAlertContent = null
 	}) {
 	return <List>
-		<Box>
+		{!!items.length && <Box>
 			<Select error={errorMsg ? 1 : 0}>
 				{
 					items.map((i, k) => (<OneGroup
@@ -182,7 +182,12 @@ export default function MySelectList(
 			</Select>
 			<Typography variant="caption" align="center"
 			            sx={{color: "error.main", marginLeft: "14px"}}>{errorMsg}</Typography>
-		</Box>
+		</Box>}
+		{
+			!items.length && <Typography sx={{color: 'text.secondary'}}>
+				Aucun element trouve veillez en creer
+			</Typography>
+		}
 		<Box>
 			<Button sx={{mb: 2}} onClick={onOpenAdd} disabled={loading}>Ajouter un element</Button>
 		</Box>

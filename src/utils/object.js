@@ -51,3 +51,11 @@ export function getComparator(order, orderBy) {
 export function toUpper(obj) {
 	return Object.entries(obj).reduce((acc, [k, v]) => ({...acc, [k.charAt(0).toUpperCase() + k.slice(1)]: v}), {})
 }
+
+export function getDecantObject(from, to){
+	if (!to) return from
+	return Object.entries(from).reduce((acc, [k,v]) => {
+		if (v === null) return {...acc, [k]: to[k]}
+		return {...acc, [k]: v}
+	}, {})
+}

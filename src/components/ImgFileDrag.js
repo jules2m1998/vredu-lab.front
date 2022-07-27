@@ -1,6 +1,6 @@
 import {styled,} from "@mui/material/styles";
 import {Button, Stack, Typography} from "@mui/material";
-import {useCallback, useRef, useState} from "react";
+import {useCallback, useMemo, useRef, useState} from "react";
 import PropTypes from "prop-types";
 import Iconify from "./Iconify";
 import {ICON} from "../utils/const";
@@ -45,7 +45,7 @@ export default function ImgFileDrag(
 		height = 200,
 		errorMsg = null,
 		onResetErrorMsg,
-		defaultImage = "https://www.thelist.travel/images/default-img.png"
+		defaultImage
 	}
 ) {
 	const [file, setFile] = useState(null);
@@ -57,11 +57,16 @@ export default function ImgFileDrag(
 		onChange(e.target.files[0])
 	}
 	const openFile = useCallback(() => fileInput.current.click(), [])
+	const pic = useMemo(() => {
+		if (file) return file
+		if (!defaultImage) return "https://www.thelist.travel/images/default-img.png"
+		return defaultImage?.startsWith("http") ? defaultImage : toServerPath(defaultImage)
+	}, [defaultImage, file]);
 	
 	return <Stack flex alignItems="center" justifyItems="center">
 		<Stack spacing={2}>
 			<Img width={width} height={height} isrounded={isRounded ? 1 : 0} iserror={errorMsg ? 1 : 0}
-			     src={file || (defaultImage.startsWith("http") ? defaultImage : toServerPath(defaultImage))} alt="Test"/>
+			     src={pic} alt="Test"/>
 			{
 				errorMsg && <Typography variant="caption" align="center" sx={{color: "error.main"}}>{errorMsg}</Typography>
 			}
