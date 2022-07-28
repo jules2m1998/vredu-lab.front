@@ -6,12 +6,12 @@ export function toServerPath(path) {
 
 export function tryParseInt(str) {
 	let retValue = -1;
-	if(str !== null) {
-         if(str.length > 0) {
-             if (!Number.isNaN(str)) {
-                 retValue = parseInt(str, 10);
-             }
-         }
-     }
-     return retValue;
+	if (str !== null) {
+		if (str.length > 0) {
+			if (!Number.isNaN(str)) {
+				retValue = parseInt(str, 10);
+			}
+		}
+	}
+	return retValue;
 }

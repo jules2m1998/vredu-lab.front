@@ -16,6 +16,7 @@ import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {LoadingButton} from "@mui/lab";
 import {useSearchParams} from "react-router-dom";
+import PropTypes from "prop-types";
 import Page from "../components/Page";
 import Iconify from "../components/Iconify";
 import TabPanel from "../components/tab/TabPanel";
@@ -29,7 +30,9 @@ import useGet from "../hooks/useGet";
 import useDelete from "../hooks/useDelete";
 import usePut from "../hooks/usePut";
 import TextureSelect from "../components/TextureSelect";
-import {toFormData} from "../utils/object";
+import {getDiff, paramsStringToNumber, toFormData, toUpper} from "../utils/object";
+import Loader from "../components/Loaders/Loader";
+import useSnack from "../hooks/useSnack";
 
 function a11yProps(index) {
 	return {
@@ -40,7 +43,7 @@ function a11yProps(index) {
 
 const REQUIRED = 'Ce champs est obligatoire !'
 
-function AtomForm() {
+function AtomForm({atom = null}) {
 	const [openCreateGroup, setOpenCreateGroup] = useState(false);
 	const [groups, setGroups] = useState([]);
 	
@@ -49,10 +52,10 @@ function AtomForm() {
 	
 	const [textures, setTextures] = useState([]);
 	
-	const [type, setType] = useState(null);
-	const [group, setGroup] = useState(null);
+	const [type, setType] = useState(atom?.type?.id);
+	const [group, setGroup] = useState(atom?.group?.id);
 	const [image, setImage] = useState(null);
-	const [texture, setTexture] = useState(null);
+	const [texture, setTexture] = useState(atom?.texture?.id);
 	
 	const [typeError, setTypeError] = useState(null);
 	const [groupError, setGroupError] = useState(null);
@@ -62,6 +65,7 @@ function AtomForm() {
 	const getMethod = useGet()
 	const deleteMethod = useDelete()
 	const putMethod = usePut()
+	const snack = useSnack()
 	
 	const atomSchema = Yup.object().shape({
 		Name: Yup.string().required(REQUIRED),
@@ -78,12 +82,12 @@ function AtomForm() {
 		),
 	})
 	
-	const defaultValues = {
-		Name: "",
-		Symbol: "",
-		MassNumber: 0,
-		AtomicNumber: 0,
-	}
+	const defaultValues = useMemo(() => ({
+		Name: atom?.name || "",
+		Symbol: atom?.symbol || "",
+		MassNumber: atom?.massNumber || "",
+		AtomicNumber: atom?.atomicNumber || "",
+	}), [atom]);
 	
 	const methods = useForm({
 		resolver: yupResolver(atomSchema),
@@ -93,15 +97,27 @@ function AtomForm() {
 	const {
 		handleSubmit,
 		formState: {isSubmitting},
-	} = methods;
+	} = useMemo(() => methods, [methods]);
 	
 	const onSubmit = useCallback(async (e) => {
 		if (type === null || group === null || texture === null) return
 		const payload = {...e, GroupId: group, TypeId: type, TextureId: texture, Image: image}
-		const data = toFormData(payload)
-		const result = await postMethod("Element", "Element cree avec succes", {data})
-		console.log(result)
-	}, [group, image, postMethod, texture, type]);
+		if (!atom) {
+			const data = toFormData(payload)
+			const result = await postMethod("Element", "Element cree avec succes", {data})
+			console.log(result)
+		} else {
+			const diff = getDiff(paramsStringToNumber(payload), toUpper({...atom, TypeId: atom?.type?.id, GroupId: atom?.group?.id, TextureId: atom?.texture?.id, }))
+			if (diff.Image === null) delete diff.Image
+			if (!Object.entries(diff).length){
+				snack("Aucune modification apportee a l'element !", {variant: "warning"})
+			} else {
+				diff.Id = atom?.id
+				const result = await putMethod('Element', "Modification effectuee !", {data: toFormData(diff)})
+				console.log(result)
+			}
+		}
+	}, [atom, group, image, postMethod, putMethod, snack, texture, type]);
 	const getGroup = useCallback(async () => {
 		const data = await getMethod("GroupElement")
 		if (data) setGroups(data);
@@ -147,13 +163,13 @@ function AtomForm() {
 		return !!data
 	}, [getType, putMethod]);
 	const verify = useCallback(() => {
-		if (type === null){
+		if (type === null) {
 			setTypeError(REQUIRED)
 		}
-		if (group === null){
+		if (group === null) {
 			setGroupError(REQUIRED)
 		}
-		if (texture === null){
+		if (texture === null) {
 			setTextureError(REQUIRED)
 		}
 	}, [group, texture, type]);
@@ -173,6 +189,7 @@ function AtomForm() {
 						loading={isSubmitting}
 						onChange={setImage}
 						onResetErrorMsg={() => null}
+						defaultImage={atom?.image}
 					/>
 				</Grid>
 				<Grid container item xs={9} spacing={3}>
@@ -195,7 +212,7 @@ function AtomForm() {
 					<Grid item container xs={12} spacing={2}>
 						<Grid item xs={6}>
 							<FormControl>
-								<FormLabel sx={{mb:1}}>Groupe d'element</FormLabel>
+								<FormLabel sx={{mb: 1}}>Groupe d'element</FormLabel>
 								<MySelectList
 									items={groups}
 									onOpenAdd={() => setOpenCreateGroup(true)}
@@ -213,7 +230,7 @@ function AtomForm() {
 						</Grid>
 						<Grid item xs={6}>
 							<FormControl>
-								<FormLabel sx={{mb:1}}>Type d'element</FormLabel>
+								<FormLabel sx={{mb: 1}}>Type d'element</FormLabel>
 								<MySelectList
 									items={types}
 									align="start"
@@ -231,7 +248,7 @@ function AtomForm() {
 						</Grid>
 						<Grid item xs={12}>
 							<FormControl fullWidth>
-								<FormLabel sx={{mb:1}}>Texture</FormLabel>
+								<FormLabel sx={{mb: 1}}>Texture</FormLabel>
 								<TextureSelect
 									active={texture}
 									onChange={setTexture}
@@ -250,7 +267,9 @@ function AtomForm() {
 							loading={isSubmitting}
 							onClick={verify}
 						>
-							Envoyer
+							{
+								atom ? "Modifier" : "Enregistrer"
+							}
 						</LoadingButton>
 					</Grid>
 				</Grid>
@@ -281,17 +300,48 @@ function AtomForm() {
 	</>
 }
 
+AtomForm.propTypes = {
+	atom: PropTypes.object
+}
+
 export default function ElementForm() {
 	const [value, setValue] = useState(0);
+	const [element, setElement] = useState(null);
+	const [loading, setLoading] = useState(true);
+	
+	const isAtom = useCallback(() => {
+		if (element) return element.children.length === 0
+		return null
+	}, [element]);
+	
 	const tabHeaders = useMemo(() => [
-		{name: "Atome", icon: "bx:atom"},
-		{name: "Molecule", icon: "file-icons:moleculer"},
-	], [])
+		{name: "Atome", icon: "bx:atom", disabled: isAtom() === false},
+		{name: "Molecule", icon: "file-icons:moleculer", disabled: isAtom()},
+	], [isAtom])
 	const [searchParams] = useSearchParams();
+	const getMethod = useGet()
+	
+	const getCurrentElement = useCallback(async (id) => {
+		const element = await getMethod(`Element/${id}`)
+		if (element) {
+			setElement(element)
+			setValue(element.children.length !== 0 ? 1 : 0)
+		}
+		setLoading(false)
+	}, [getMethod]);
+	
+	useEffect(() => {
+		const id = searchParams.get("id")
+		if (id) getCurrentElement(id)
+		else setLoading(false)
+	}, [getCurrentElement, searchParams]);
 	
 	const handleChange = (event, newValue) => {
 		setValue(newValue);
 	};
+	
+	if (loading) return <Loader text="Chargement de l'element..."/>
+	
 	return <Page title="Creation d'elements chimiques">
 		<Container>
 			<Stack>
@@ -319,6 +369,7 @@ export default function ElementForm() {
 										iconPosition="start"
 										label={item.name}
 										{...a11yProps(k)}
+										disabled={item.disabled}
 										key={k}
 									/>
 								))
@@ -327,7 +378,7 @@ export default function ElementForm() {
 					</Box>
 					<Card sx={{p: 3}}>
 						<TabPanel value={value} index={0}>
-							<AtomForm/>
+							<AtomForm atom={isAtom() === true ? element : null}/>
 						</TabPanel>
 						<TabPanel value={value} index={1}>
 							2

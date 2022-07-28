@@ -68,8 +68,8 @@ const TextureItem = ({texture, active, onChange, onResetError}) => {
 
 
 TextureItem.propTypes = {
-	texture: PropTypes.arrayOf(PropTypes.object).isRequired,
-	active: PropTypes.number.isRequired,
+	texture: PropTypes.object.isRequired,
+	active: PropTypes.number,
 	onChange: PropTypes.func.isRequired,
 	onResetError: PropTypes.func,
 };
@@ -121,8 +121,8 @@ export default function TextureSelect(
 TextureSelect.propTypes = {
 	maxHeight: PropTypes.number,
 	errorMsg: PropTypes.string,
-	textures: PropTypes.arrayOf(PropTypes.object).isRequired,
-	active: PropTypes.number.isRequired,
+	textures: PropTypes.arrayOf(PropTypes.object),
+	active: PropTypes.number,
 	onChange: PropTypes.func.isRequired,
 	onResetError: PropTypes.func,
 };

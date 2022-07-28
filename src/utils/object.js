@@ -1,4 +1,5 @@
 import {filter} from "lodash";
+import {tryParseInt} from "./string";
 
 export function getDiff (obj1, obj2, upper = false) {
     return Object.entries(obj1).reduce((acc, [k, v]) => {
@@ -58,4 +59,8 @@ export function getDecantObject(from, to){
 		if (v === null) return {...acc, [k]: to[k]}
 		return {...acc, [k]: v}
 	}, {})
+}
+
+export function paramsStringToNumber(obj){
+	return Object.entries(obj).reduce((acc, [k, v]) => ({...acc, [k]: tryParseInt(v) >= 0 ? tryParseInt(v) : v}), {})
 }
