@@ -99,6 +99,23 @@ const navConfig = [
 
         ]
     },
+    {
+        title: 'Elements chimiques',
+        path: '/dashboard/elements',
+        icon: getIcon('eos-icons:atom-electron'),
+        admin: true,
+        children: [
+            {
+                title: 'Liste',
+                path: '/dashboard/elements/list'
+            },
+            {
+                title: 'Creer',
+                path: '/dashboard/elements/form'
+            },
+
+        ]
+    },
 ];
 
 export default navConfig;

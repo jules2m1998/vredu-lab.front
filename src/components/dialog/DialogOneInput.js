@@ -19,7 +19,7 @@ DialogOneInput.propTypes = {
 	label: PropTypes.string,
 }
 
-export function DialogOneInput({onSubmit, onClose, open, apiName="name", value = "", title, description, label}) {
+export function DialogOneInput({onSubmit, onClose, open, apiName = "name", value = "", title, description, label}) {
 	const alert = useSnack()
 	
 	const updateType = useMemo(() => Yup.object().shape({
@@ -37,8 +37,8 @@ export function DialogOneInput({onSubmit, onClose, open, apiName="name", value =
 	
 	
 	const beforeSendData = useCallback((e) => {
-		if (e[apiName].trim() === value){
-			alert("Aucune modification effectuee !", { variant: 'warning'})
+		if (e[apiName].trim() === value) {
+			alert("Aucune modification effectuee !", {variant: 'warning'})
 		} else {
 			onSubmit(e)
 		}
@@ -51,7 +51,7 @@ export function DialogOneInput({onSubmit, onClose, open, apiName="name", value =
 	
 	return (
 		<Dialog open={open}>
-			<FormProvider methods={methods} onSubmit={handleSubmit(beforeSendData)}>
+			<FormProvider methods={methods}>
 				<DialogTitle>
 					{title}
 				</DialogTitle>
@@ -62,7 +62,11 @@ export function DialogOneInput({onSubmit, onClose, open, apiName="name", value =
 					<RHFTextField sx={{mt: 3}} name={apiName} label={label}/>
 				</DialogContent>
 				<DialogActions>
-					<LoadingButton type="submit" loading={isSubmitting} disabled={isSubmitting}>
+					<LoadingButton
+						type="button"
+						onClick={handleSubmit(beforeSendData)}
+						loading={isSubmitting}
+						disabled={isSubmitting}>
 						Enregistrer
 					</LoadingButton>
 					<Button

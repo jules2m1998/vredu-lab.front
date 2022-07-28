@@ -11,7 +11,6 @@ import {
 	Card,
 	Grid
 } from "@mui/material";
-import PropTypes from "prop-types";
 import {useCallback, useContext, useMemo, useState} from "react";
 import {LoadingButton} from "@mui/lab";
 import * as Yup from 'yup';
@@ -28,24 +27,7 @@ import {getDiff, toFormData} from "../utils/object";
 import {RequestContext} from "../http/RequestProvider";
 import ImgFileDrag from "../components/ImgFileDrag";
 import usePut from "../hooks/usePut";
-
-function TabPanel(props) {
-	const {children, value, index, ...other} = props;
-	
-	return (
-		<div
-			role="tabpanel"
-			hidden={value !== index}
-			id={`simple-tabpanel-${index}`}
-			aria-labelledby={`simple-tab-${index}`}
-			{...other}
-		>
-			{value === index && (
-				<Box sx={{pt: 3}}>{children}</Box>
-			)}
-		</div>
-	);
-}
+import TabPanel from "../components/tab/TabPanel";
 
 function GeneralForm() {
 	const [file, setFile] = useState(null);
@@ -226,12 +208,6 @@ function PasswordForm() {
 		</Stack>
 	</FormProvider>
 }
-
-TabPanel.propTypes = {
-	children: PropTypes.node.isRequired,
-	value: PropTypes.number.isRequired,
-	index: PropTypes.number.isRequired,
-};
 
 function a11yProps(index) {
 	return {

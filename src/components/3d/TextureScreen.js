@@ -7,7 +7,7 @@ import {toServerPath} from "../../utils/string";
 
 const Div = styled('div')(({radius}) => ({
 	width: '100%',
-	maxWidth: 400,
+	maxWidth: 450,
 	height: "100%",
 	minHeight: 200,
 	borderRadius: radius,

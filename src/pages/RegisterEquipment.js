@@ -40,7 +40,7 @@ export default function RegisterEquipment() {
 	return <Page title={`${current? "Modifier" : "Creer"} un materiel`}>
 		<Container>
 			<Stack>
-				<Typography variant="h4" sx={{}}>
+				<Typography variant="h4">
 					{current? "Modification" : "Creation "} d'un equipement
 				</Typography>
 				<Typography sx={{color: 'text.secondary', mb: 5}}>Saisissez les informations sur l'equpement a {current? "modifier" : "creer"} ci-dessous

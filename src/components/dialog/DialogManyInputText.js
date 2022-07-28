@@ -25,7 +25,7 @@ export default function DialogManyInputText({fields, open, onClose, title, descr
 			</DialogContent>
 			
 			<DialogActions>
-				<LoadingButton type="submit" loading={isSubmitting} disabled={isSubmitting}>
+				<LoadingButton type="button" loading={isSubmitting} disabled={isSubmitting}>
 					Enregistrer
 				</LoadingButton>
 				<Button

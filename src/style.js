@@ -55,11 +55,25 @@ export const ContentStyleLoad = styled('div')(({theme}) => ({
 }));
 
 
-export const Select = styled('div')(({theme, error}) => ({
+export const Select = styled('div')(({theme, error, maxheight}) => ({
 	display: "flex",
 	border: `1px solid ${error ? theme.palette.error.light : "rgba(0,0,0,.15)"}`,
 	width: "100%",
 	padding: 8,
 	flexWrap: "wrap",
-	gap: 2
+	maxHeight: maxheight,
+	overflowY: maxheight && "auto",
+	gap: 2,
+	"&::-webkit-scrollbar-track":{
+		"-webkit-box-shadow": "inset 0 0 6px rgba(0,0,0,0.3)",
+		backgroundColor: "#F5F5F5",
+	},
+	"&::-webkit-scrollbar":{
+		width: 10,
+		backgroundColor: "#F5F5F5",
+	},
+	"&::-webkit-scrollbar-thumb":{
+		border: `1px solid ${theme.palette.primary.light}`,
+		backgroundColor: theme.palette.primary.light,
+	},
 }))

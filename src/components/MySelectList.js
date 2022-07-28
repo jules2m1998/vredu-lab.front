@@ -8,11 +8,11 @@ import {DialogOneInput} from "./dialog/DialogOneInput";
 import ConfirmAlert from "./ConfirmAlert";
 import {Select} from "../style";
 
-const List = styled('div')(({theme}) => ({
+const List = styled('div')(({theme, align}) => ({
 	display: "flex",
 	flexDirection: "column",
 	width: "100%",
-	alignItems: "end",
+	alignItems: align,
 	gap: 5,
 	".Mui-selected": {
 		background: theme.palette.primary.lighter,
@@ -141,6 +141,7 @@ MySelectList.propTypes = {
 	onOpenDialog: PropTypes.func,
 	deleteAlertTitle: PropTypes.string,
 	deleteAlertContent: PropTypes.string,
+	align: PropTypes.string,
 }
 
 export default function MySelectList(
@@ -156,9 +157,10 @@ export default function MySelectList(
 		onDeleteOne,
 		onOpenDialog = null,
 		deleteAlertTitle = null,
-		deleteAlertContent = null
+		deleteAlertContent = null,
+		align='end'
 	}) {
-	return <List>
+	return <List align={align}>
 		{!!items.length && <Box>
 			<Select error={errorMsg ? 1 : 0}>
 				{
@@ -180,11 +182,10 @@ export default function MySelectList(
 					))
 				}
 			</Select>
-			<Typography variant="caption" align="center"
-			            sx={{color: "error.main", marginLeft: "14px"}}>{errorMsg}</Typography>
+			<Typography variant="caption" align="center" sx={{color: "error.main", marginLeft: "14px"}}>{errorMsg}</Typography>
 		</Box>}
 		{
-			!items.length && <Typography sx={{color: 'text.secondary'}}>
+			!items.length && <Typography variant="caption" sx={{color: 'text.secondary'}}>
 				Aucun element trouve veillez en creer
 			</Typography>
 		}
