@@ -4,7 +4,7 @@ import {
 	Container,
 	FormControl,
 	FormLabel,
-	Grid,
+	Grid, ListItem, ListItemButton, ListItemIcon, ListItemText,
 	Stack,
 	Tab,
 	Tabs,
@@ -33,6 +33,7 @@ import TextureSelect from "../components/TextureSelect";
 import {getDiff, paramsStringToNumber, toFormData, toUpper} from "../utils/object";
 import Loader from "../components/Loaders/Loader";
 import useSnack from "../hooks/useSnack";
+import DragAndDrop from "../components/DragAndDrop";
 
 function a11yProps(index) {
 	return {
@@ -107,9 +108,14 @@ function AtomForm({atom = null}) {
 			const result = await postMethod("Element", "Element cree avec succes", {data})
 			console.log(result)
 		} else {
-			const diff = getDiff(paramsStringToNumber(payload), toUpper({...atom, TypeId: atom?.type?.id, GroupId: atom?.group?.id, TextureId: atom?.texture?.id, }))
+			const diff = getDiff(paramsStringToNumber(payload), toUpper({
+				...atom,
+				TypeId: atom?.type?.id,
+				GroupId: atom?.group?.id,
+				TextureId: atom?.texture?.id,
+			}))
 			if (diff.Image === null) delete diff.Image
-			if (!Object.entries(diff).length){
+			if (!Object.entries(diff).length) {
 				snack("Aucune modification apportee a l'element !", {variant: "warning"})
 			} else {
 				diff.Id = atom?.id
@@ -304,8 +310,105 @@ AtomForm.propTypes = {
 	atom: PropTypes.object
 }
 
+const Item = ({item}) => <ListItem dense divider disablePadding>
+	<ListItemButton>
+		<ListItemIcon>
+			Test
+		</ListItemIcon>
+		<ListItemText primary={item?.name}/>
+	</ListItemButton>
+</ListItem>
+
+function MoleculeForm() {
+	const items = useMemo(() => [{name: "Test"}, {name: "Test1"}, {name: "Test2"},], []);
+	const [image, setImage] = useState(null);
+	const getMethod = useGet()
+	
+	const [textures, setTextures] = useState([]);
+	const [texture, setTexture] = useState(null);
+	
+	const [textureError, setTextureError] = useState(null);
+	const getTextures = useCallback(async () => {
+		const data = await getMethod("Texture")
+		if (data) setTextures(data)
+	}, [getMethod]);
+	
+	const moleculeSchema = Yup.object().shape({
+		Name: Yup.string().required(REQUIRED)
+	})
+	
+	const defaultValues = useMemo(() => ({
+		Name: ""
+	}), []);
+	
+	const methods = useForm({
+		resolver: yupResolver(moleculeSchema),
+		defaultValues,
+	});
+	
+	const {
+		handleSubmit,
+		formState: {isSubmitting},
+	} = useMemo(() => methods, [methods]);
+	
+	const onSubmit = useCallback(() => null, []);
+	const verify = useCallback(() => null, []);
+	
+	useEffect(() => {
+		getTextures()
+	}, []);
+	
+	
+	return <>
+		<FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+			<Grid container spacing={2}>
+				<Grid item xs={3}>
+					<ImgFileDrag
+						disabled={isSubmitting}
+						loading={isSubmitting}
+						onChange={setImage}
+						onResetErrorMsg={() => null}
+					/>
+				</Grid>
+				<Grid container item xs={9} spacing={3}>
+					<Grid item xs={12}>
+						<RHFTextField name="Name" label="Nom de l'atome"/>
+					</Grid>
+					<Grid item xs={12}>
+						<FormControl fullWidth>
+							<FormLabel sx={{mb: 1}}>Texture</FormLabel>
+							<TextureSelect
+								active={texture}
+								onChange={setTexture}
+								textures={textures}
+								errorMsg={textureError}
+								onResetError={() => setTextureError(null)}
+							/>
+						</FormControl>
+					</Grid>
+					<Grid item xs={12}>
+						<DragAndDrop items={items} itemSize={39} item={<Item/>} gap={0}/>
+					</Grid>
+					<Grid item alignItems="end">
+						<LoadingButton
+							size="large"
+							type="submit"
+							variant="contained"
+							loading={isSubmitting}
+							onClick={verify}
+						>
+							Save
+						</LoadingButton>
+					</Grid>
+				</Grid>
+			</Grid>
+		
+		</FormProvider>
+	</>
+}
+
 export default function ElementForm() {
-	const [value, setValue] = useState(0);
+	const [value, setValue] = useState(1);
 	const [element, setElement] = useState(null);
 	const [loading, setLoading] = useState(true);
 	
@@ -381,7 +484,7 @@ export default function ElementForm() {
 							<AtomForm atom={isAtom() === true ? element : null}/>
 						</TabPanel>
 						<TabPanel value={value} index={1}>
-							2
+							<MoleculeForm/>
 						</TabPanel>
 					</Card>
 				</Box>
