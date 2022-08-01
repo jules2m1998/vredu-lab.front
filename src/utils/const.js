@@ -7,4 +7,6 @@ export const ICON = {
 	eye: 'akar-icons:eye',
 	protect: 'icon-park-outline:protect',
 	labTools: 'raphael:lab',
+	add: 'carbon:add',
+	rm: 'ic:baseline-remove',
 }

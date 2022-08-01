@@ -4,17 +4,17 @@ import {
 	Container,
 	FormControl,
 	FormLabel,
-	Grid, ListItem, ListItemButton, ListItemIcon, ListItemText,
+	Grid, IconButton, List, ListItem, ListItemText,
 	Stack,
 	Tab,
-	Tabs,
+	Tabs, TextField,
 	Typography
 } from "@mui/material";
 import * as Yup from "yup";
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {LoadingButton} from "@mui/lab";
+import {Autocomplete, LoadingButton} from "@mui/lab";
 import {useSearchParams} from "react-router-dom";
 import PropTypes from "prop-types";
 import Page from "../components/Page";
@@ -33,7 +33,8 @@ import TextureSelect from "../components/TextureSelect";
 import {getDiff, paramsStringToNumber, toFormData, toUpper} from "../utils/object";
 import Loader from "../components/Loaders/Loader";
 import useSnack from "../hooks/useSnack";
-import DragAndDrop from "../components/DragAndDrop";
+import {ICON} from "../utils/const";
+import {Molecule} from "../style";
 
 function a11yProps(index) {
 	return {
@@ -71,6 +72,7 @@ function AtomForm({atom = null}) {
 	const atomSchema = Yup.object().shape({
 		Name: Yup.string().required(REQUIRED),
 		Symbol: Yup.string().required(REQUIRED),
+		Description: Yup.string().required(REQUIRED),
 		MassNumber: Yup.string().test(
 			'isNumber',
 			'Ce champs est requis et doit etre un nombre',
@@ -88,6 +90,7 @@ function AtomForm({atom = null}) {
 		Symbol: atom?.symbol || "",
 		MassNumber: atom?.massNumber || "",
 		AtomicNumber: atom?.atomicNumber || "",
+		Description: atom?.Description || "",
 	}), [atom]);
 	
 	const methods = useForm({
@@ -215,6 +218,9 @@ function AtomForm({atom = null}) {
 							<RHFTextField name="AtomicNumber" label="Numero atomique"/>
 						</Grid>
 					</Grid>
+					<Grid item xs={12}>
+						<RHFTextField name="Description" multiline minRows={4} label="Description de l'element"/>
+					</Grid>
 					<Grid item container xs={12} spacing={2}>
 						<Grid item xs={6}>
 							<FormControl>
@@ -310,36 +316,37 @@ AtomForm.propTypes = {
 	atom: PropTypes.object
 }
 
-const Item = ({item}) => <ListItem dense divider disablePadding>
-	<ListItemButton>
-		<ListItemIcon>
-			Test
-		</ListItemIcon>
-		<ListItemText primary={item?.name}/>
-	</ListItemButton>
-</ListItem>
-
-function MoleculeForm() {
-	const items = useMemo(() => [{name: "Test"}, {name: "Test1"}, {name: "Test2"},], []);
+function MoleculeForm({molecule = null}) {
 	const [image, setImage] = useState(null);
+	const [children, setChildren] = useState(molecule?.children.map(elt => ({...elt.children, ...elt})) || []);
+	const [atoms, setAtoms] = useState([]);
 	const getMethod = useGet()
+	const postMethod = usePost()
+	const putMethod = usePut()
+	const snack = useSnack()
 	
 	const [textures, setTextures] = useState([]);
-	const [texture, setTexture] = useState(null);
+	const [texture, setTexture] = useState(molecule?.texture?.id);
 	
 	const [textureError, setTextureError] = useState(null);
 	const getTextures = useCallback(async () => {
 		const data = await getMethod("Texture")
 		if (data) setTextures(data)
 	}, [getMethod]);
+	const getAtom = useCallback(async () => {
+		const data = await getMethod("/Element/atom");
+		if (data) setAtoms(data)
+	}, [getMethod]);
 	
 	const moleculeSchema = Yup.object().shape({
-		Name: Yup.string().required(REQUIRED)
+		Name: Yup.string().required(REQUIRED),
+		Description: Yup.string().required(REQUIRED),
 	})
 	
 	const defaultValues = useMemo(() => ({
-		Name: ""
-	}), []);
+		Name: molecule?.name || "",
+		Description: molecule?.description || ""
+	}), [molecule]);
 	
 	const methods = useForm({
 		resolver: yupResolver(moleculeSchema),
@@ -351,12 +358,88 @@ function MoleculeForm() {
 		formState: {isSubmitting},
 	} = useMemo(() => methods, [methods]);
 	
-	const onSubmit = useCallback(() => null, []);
-	const verify = useCallback(() => null, []);
+	const onSubmit = useCallback(async (e) => {
+		if (texture === null || children.length === 0) return
+		const Atomes = JSON.stringify(children.map(value => ({
+			id: value.id,
+			position: value.position,
+			quantity: value.quantity
+		})))
+		const payload = {
+			...e,
+			TextureId: texture,
+			Image: image,
+			Atomes
+		}
+		if (!molecule) {
+			console.log(payload)
+			const data = await postMethod("Element/molecule", "Molecule cree avec succes.", {data: toFormData(payload)})
+			console.log(data)
+		} else {
+			const diff = getDiff(payload, {
+				Image: molecule.image,
+				Name: molecule.name,
+				TextureId: molecule.texture.id,
+				Atomes: JSON.stringify(molecule?.children.map(v => ({id: v.id, position: v.position, quantity: v.quantity}))),
+				Description: molecule.description
+			})
+			if (diff.Image === null) delete diff.Image
+			console.log(diff)
+			if (!Object.keys(diff).length) snack("Aucune modification apportee a cette molecule", {variant: 'warning'})
+			else {
+				const data = await putMethod("Element/molecule", "Modification appliquees !", {
+					data: toFormData({
+						...diff,
+						id: molecule.id
+					})
+				})
+				console.log(data)
+			}
+		}
+	}, [children, image, molecule, postMethod, putMethod, snack, texture]);
+	const verify = useCallback(() => {
+		if (texture === null) setTextureError(REQUIRED)
+		if (children.length === 0) snack("Vous devez preciser les atomes pour une molecule !", {variant: 'warning'})
+	}, [children, snack, texture]);
+	const childrenPos = useMemo(() => children.sort((a, b) => a.position - b.position), [children]);
+	const handleChangeChildren = useCallback((_, value, reason, details) => {
+		switch (reason) {
+			case "selectOption":
+				setChildren(c => [...c, {...details.option, position: c.length + 1, quantity: 1}])
+				break;
+			case "removeOption":
+				setChildren(c => c.filter(value => value.id !== details.option.id))
+				break;
+			default:
+				break;
+		}
+	}, []);
+	const incrementation = useCallback((id, isAdd = false) => {
+		setChildren(c => {
+			const val = c.find(value => value?.id === id)
+			const position = isAdd ? val?.position + 1 : val?.position - 1
+			const current = c.find(value => value?.position === position)
+			if (val && current) return [...c.filter(value => value?.id !== id && value?.id !== current.id), {
+				...val,
+				position
+			}, {...current, position: val.position}]
+			return [...c]
+		})
+	}, []);
+	const incrementationQty = useCallback((id, isAdd = false) => {
+		setChildren(c => {
+			const val = c.find(value => value?.id === id)
+			const quantity = isAdd ? val?.quantity + 1 : val?.quantity - 1;
+			if (val) return [...c.filter(value => value?.id !== id), {...val, quantity}]
+			return [...c]
+		})
+	}, []);
+	const autoComplete = useMemo(() => molecule?.children.map(elt => elt.children), [molecule?.children]);
 	
 	useEffect(() => {
 		getTextures()
-	}, []);
+		getAtom()
+	}, [getAtom, getTextures]);
 	
 	
 	return <>
@@ -368,11 +451,15 @@ function MoleculeForm() {
 						loading={isSubmitting}
 						onChange={setImage}
 						onResetErrorMsg={() => null}
+						defaultImage={molecule?.image}
 					/>
 				</Grid>
 				<Grid container item xs={9} spacing={3}>
 					<Grid item xs={12}>
 						<RHFTextField name="Name" label="Nom de l'atome"/>
+					</Grid>
+					<Grid item xs={12}>
+						<RHFTextField name="Description" label="Description" multiline minRows={4}  />
 					</Grid>
 					<Grid item xs={12}>
 						<FormControl fullWidth>
@@ -386,8 +473,102 @@ function MoleculeForm() {
 							/>
 						</FormControl>
 					</Grid>
-					<Grid item xs={12}>
-						<DragAndDrop items={items} itemSize={39} item={<Item/>} gap={0}/>
+					<Grid item container xs={12} spacing={3}>
+						<Grid item xs={12}>
+							<FormControl fullWidth>
+								<FormLabel sx={{mb: 1}}>Formule chimique</FormLabel>
+								{
+									childrenPos.length > 0 ?
+										<Stack direction="row">
+											{
+												childrenPos.map((value, k) => <Molecule key={k}>
+													<Typography variant="h3">{value.symbol}</Typography>
+													{value.quantity > 1 && <Typography className="indice">{value.quantity}</Typography>}
+												</Molecule>)
+											}
+										</Stack> :
+										"Aucun atome selectionne"
+								}
+							</FormControl>
+						</Grid>
+						<Grid item xs={12}>
+							<FormControl fullWidth>
+								<FormLabel sx={{mb: 1}}>Choix des atomes</FormLabel>
+								<Autocomplete
+									multiple
+									id="tags-standard"
+									options={atoms}
+									getOptionLabel={(option) => option.name}
+									defaultValue={autoComplete}
+									onChange={handleChangeChildren}
+									renderInput={(params) => (
+										<TextField
+											{...params}
+											label="Atomes"
+											placeholder="Selectionner un atome..."
+										/>
+									)}
+									isOptionEqualToValue={(option, value) => option.id === value.id}
+								/>
+							</FormControl>
+						</Grid>
+						<Grid item xs={12}>
+							<FormControl fullWidth>
+								<FormLabel sx={{mb: 1}}>Choix des atomes</FormLabel>
+								
+								{
+									childrenPos.length > 0 ?
+										<List dense>
+											{
+												childrenPos.map((value, index) => <ListItem
+													dense
+													key={index}
+													divider
+													secondaryAction={
+														<>
+															<Stack direction="row" gap={2}>
+																<Stack direction="row" gap={1 / 2} flex justifyItems="center" alignItems="center">
+																	<Typography variant="caption">Quantité : </Typography>
+																	<IconButton
+																		size="small"
+																		edge="end"
+																		aria-label="delete"
+																		onClick={() => incrementationQty(value.id, true)}
+																	>
+																		<Iconify icon={ICON.add}/>
+																	</IconButton>
+																	<Typography variant="caption">{value.quantity}</Typography>
+																	<IconButton disabled={value.quantity === 1} size="small" edge="end"
+																	            aria-label="delete"
+																	            onClick={() => incrementationQty(value.id)}>
+																		<Iconify icon={ICON.rm}/>
+																	</IconButton>
+																</Stack>
+																<Stack direction="row" gap={1 / 2} flex justifyItems="center" alignItems="center">
+																	<Typography variant="caption">Position : </Typography>
+																	<IconButton disabled={value.position === childrenPos.length} size="small" edge="end"
+																	            aria-label="delete" onClick={() => incrementation(value.id, true)}>
+																		<Iconify icon={ICON.add}/>
+																	</IconButton>
+																	<Typography variant="caption">{value.position}</Typography>
+																	<IconButton disabled={value.position === 1} size="small" edge="end"
+																	            aria-label="delete"
+																	            onClick={() => incrementation(value.id)}>
+																		<Iconify icon={ICON.rm}/>
+																	</IconButton>
+																</Stack>
+															</Stack>
+														</>
+													}
+												>
+													<ListItemText primary={value.name}/>
+												</ListItem>)
+											}
+										</List> :
+										"Aucun atome selectionne"
+								}
+							</FormControl>
+						</Grid>
 					</Grid>
 					<Grid item alignItems="end">
 						<LoadingButton
@@ -402,9 +583,12 @@ function MoleculeForm() {
 					</Grid>
 				</Grid>
 			</Grid>
-		
 		</FormProvider>
 	</>
+}
+
+MoleculeForm.propTypes = {
+	molecule: PropTypes.object
 }
 
 export default function ElementForm() {
@@ -419,7 +603,7 @@ export default function ElementForm() {
 	
 	const tabHeaders = useMemo(() => [
 		{name: "Atome", icon: "bx:atom", disabled: isAtom() === false},
-		{name: "Molecule", icon: "file-icons:moleculer", disabled: isAtom()},
+		{name: "Molecule", icon: "file-icons:moleculer", disabled: isAtom() === true},
 	], [isAtom])
 	const [searchParams] = useSearchParams();
 	const getMethod = useGet()
@@ -484,7 +668,7 @@ export default function ElementForm() {
 							<AtomForm atom={isAtom() === true ? element : null}/>
 						</TabPanel>
 						<TabPanel value={value} index={1}>
-							<MoleculeForm/>
+							<MoleculeForm molecule={isAtom() === false ? element : null}/>
 						</TabPanel>
 					</Card>
 				</Box>

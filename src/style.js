@@ -77,3 +77,12 @@ export const Select = styled('div')(({theme, error, maxheight}) => ({
 		backgroundColor: theme.palette.primary.light,
 	},
 }))
+
+export const Molecule = styled('div')(() => ({
+	display: 'flex',
+	textTransform: 'capitalize',
+	".indice": {
+		position: "relative",
+		transform: "translateY(50%)"
+	}
+}))
