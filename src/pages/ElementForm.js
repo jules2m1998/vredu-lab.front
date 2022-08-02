@@ -15,7 +15,7 @@ import {useCallback, useEffect, useMemo, useState} from "react";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {Autocomplete, LoadingButton} from "@mui/lab";
-import {useSearchParams} from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 import PropTypes from "prop-types";
 import Page from "../components/Page";
 import Iconify from "../components/Iconify";
@@ -44,6 +44,7 @@ function a11yProps(index) {
 }
 
 const REQUIRED = 'Ce champs est obligatoire !'
+const LIST_PATH = '/dashboard/elements/list'
 
 function AtomForm({atom = null}) {
 	const [openCreateGroup, setOpenCreateGroup] = useState(false);
@@ -68,6 +69,7 @@ function AtomForm({atom = null}) {
 	const deleteMethod = useDelete()
 	const putMethod = usePut()
 	const snack = useSnack()
+	const navigate = useNavigate()
 	
 	const atomSchema = Yup.object().shape({
 		Name: Yup.string().required(REQUIRED),
@@ -90,7 +92,7 @@ function AtomForm({atom = null}) {
 		Symbol: atom?.symbol || "",
 		MassNumber: atom?.massNumber || "",
 		AtomicNumber: atom?.atomicNumber || "",
-		Description: atom?.Description || "",
+		Description: atom?.description || "",
 	}), [atom]);
 	
 	const methods = useForm({
@@ -109,7 +111,7 @@ function AtomForm({atom = null}) {
 		if (!atom) {
 			const data = toFormData(payload)
 			const result = await postMethod("Element", "Element cree avec succes", {data})
-			console.log(result)
+			if (result) navigate(LIST_PATH)
 		} else {
 			const diff = getDiff(paramsStringToNumber(payload), toUpper({
 				...atom,
@@ -123,10 +125,10 @@ function AtomForm({atom = null}) {
 			} else {
 				diff.Id = atom?.id
 				const result = await putMethod('Element', "Modification effectuee !", {data: toFormData(diff)})
-				console.log(result)
+				if (result) navigate(LIST_PATH)
 			}
 		}
-	}, [atom, group, image, postMethod, putMethod, snack, texture, type]);
+	}, [atom, group, image, navigate, postMethod, putMethod, snack, texture, type]);
 	const getGroup = useCallback(async () => {
 		const data = await getMethod("GroupElement")
 		if (data) setGroups(data);
@@ -324,6 +326,7 @@ function MoleculeForm({molecule = null}) {
 	const postMethod = usePost()
 	const putMethod = usePut()
 	const snack = useSnack()
+	const navigate = useNavigate()
 	
 	const [textures, setTextures] = useState([]);
 	const [texture, setTexture] = useState(molecule?.texture?.id);
@@ -372,9 +375,8 @@ function MoleculeForm({molecule = null}) {
 			Atomes
 		}
 		if (!molecule) {
-			console.log(payload)
 			const data = await postMethod("Element/molecule", "Molecule cree avec succes.", {data: toFormData(payload)})
-			console.log(data)
+			if (data) navigate(LIST_PATH)
 		} else {
 			const diff = getDiff(payload, {
 				Image: molecule.image,
@@ -384,7 +386,6 @@ function MoleculeForm({molecule = null}) {
 				Description: molecule.description
 			})
 			if (diff.Image === null) delete diff.Image
-			console.log(diff)
 			if (!Object.keys(diff).length) snack("Aucune modification apportee a cette molecule", {variant: 'warning'})
 			else {
 				const data = await putMethod("Element/molecule", "Modification appliquees !", {
@@ -393,10 +394,10 @@ function MoleculeForm({molecule = null}) {
 						id: molecule.id
 					})
 				})
-				console.log(data)
+				if (data) navigate(LIST_PATH)
 			}
 		}
-	}, [children, image, molecule, postMethod, putMethod, snack, texture]);
+	}, [children, image, molecule, navigate, postMethod, putMethod, snack, texture]);
 	const verify = useCallback(() => {
 		if (texture === null) setTextureError(REQUIRED)
 		if (children.length === 0) snack("Vous devez preciser les atomes pour une molecule !", {variant: 'warning'})
@@ -459,7 +460,7 @@ function MoleculeForm({molecule = null}) {
 						<RHFTextField name="Name" label="Nom de l'atome"/>
 					</Grid>
 					<Grid item xs={12}>
-						<RHFTextField name="Description" label="Description" multiline minRows={4}  />
+						<RHFTextField name="Description" label="Description" multiline minRows={4}/>
 					</Grid>
 					<Grid item xs={12}>
 						<FormControl fullWidth>
@@ -578,7 +579,7 @@ function MoleculeForm({molecule = null}) {
 							loading={isSubmitting}
 							onClick={verify}
 						>
-							Save
+							Enregistrer
 						</LoadingButton>
 					</Grid>
 				</Grid>

@@ -1,7 +1,7 @@
 import {
 	Button,
 	Container,
-	Dialog,
+	Dialog, DialogActions,
 	DialogContent,
 	DialogContentText,
 	DialogTitle,
@@ -12,12 +12,16 @@ import {Link as RouterLink} from "react-router-dom";
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {styled} from "@mui/material/styles";
 import PropTypes from "prop-types";
+import {LoadingButton} from "@mui/lab";
+import {useSelector} from "react-redux";
 import Page from "../components/Page";
 import Iconify from "../components/Iconify";
 import useGet from "../hooks/useGet";
 import Loader from "../components/Loaders/Loader";
 import TextureScreen from "../components/3d/TextureScreen";
 import {Molecule as Mol} from "../style";
+import useDelete from "../hooks/useDelete";
+import {connectedUser} from "../store/user";
 
 const Atom = styled('div')(() => ({
 	display: "flex",
@@ -39,7 +43,7 @@ const Atom = styled('div')(() => ({
 
 const Molecule = styled('div')(() => ({
 	display: "flex",
-	gap: 6,
+	gap: 8,
 	flexWrap: 'wrap',
 	".item": {
 		textTransform: 'capitalize',
@@ -47,15 +51,29 @@ const Molecule = styled('div')(() => ({
 		borderRadius: 5,
 		display: 'flex',
 		flexDirection: 'column',
-		padding: 3,
-		gap: 1,
+		padding: 8,
+		gap: 4,
 		alignItems: "center",
 		cursor: "pointer",
 	}
 }))
 
-const AtomItem = ({item}) => {
+const AtomItem = ({item, refresh = async () => null}) => {
 	const [open, setOpen] = useState(false);
+	const deleteMethod = useDelete();
+	const [loading, setLoading] = useState(false);
+	const user = useSelector(connectedUser)
+	
+	const handleDelete = useCallback(async () => {
+		setLoading(true)
+		if (window.confirm("Voulez-vous vraiment supprimer cette element ?")) {
+			console.log("DELETE")
+			await deleteMethod(`Element/${item.id}`, "Suppression reussie !")
+			await refresh()
+			setOpen(false)
+		}
+		setLoading(false)
+	}, [deleteMethod, item.id, refresh]);
 	
 	return <>
 		<button
@@ -72,22 +90,49 @@ const AtomItem = ({item}) => {
 			<DialogTitle>{item.name}</DialogTitle>
 			<DialogContent>
 				<Stack alignItems="center" sx={{pb: 2}}>
-					<TextureScreen liquid={item.texture?.textureType === 0} texture={item.texture} />
+					<TextureScreen liquid={item.texture?.textureType === 0} texture={item.texture}/>
 				</Stack>
 				<DialogContentText>
 					{item.description}
 				</DialogContentText>
 			</DialogContent>
+			{
+				user.isAdmin &&
+				<DialogActions>
+					<Button disabled={loading} sx={{mr: 1}} component={RouterLink} to={`/dashboard/elements/form?id=${item.id}`}
+					        variant="contained">
+						Modifier
+					</Button>
+					<LoadingButton loading={loading} disabled={loading} onClick={handleDelete} variant="contained" color="error">
+						Supprimer
+					</LoadingButton>
+				</DialogActions>
+			}
 		</Dialog>
 	</>
 }
 
 AtomItem.propTypes = {
-	item: PropTypes.object
+	item: PropTypes.object,
+	refresh: PropTypes.func,
 }
 
-const MoleculeItem = ({item}) => {
+const MoleculeItem = ({item, refresh = async () => null}) => {
 	const [open, setOpen] = useState(false);
+	const deleteMethod = useDelete();
+	const [loading, setLoading] = useState(false);
+	const user = useSelector(connectedUser)
+	
+	const handleDelete = useCallback(async () => {
+		setLoading(true)
+		if (window.confirm("Voulez-vous vraiment supprimer cette element ?")) {
+			console.log("DELETE")
+			await deleteMethod(`Element/molecule/${item.id}`, "Suppression reussie !")
+			await refresh()
+			setOpen(false)
+		}
+		setLoading(false)
+	}, [deleteMethod, item.id, refresh]);
 	
 	return <>
 		<button
@@ -110,18 +155,31 @@ const MoleculeItem = ({item}) => {
 			<DialogTitle>{item.name}</DialogTitle>
 			<DialogContent>
 				<Stack alignItems="center" sx={{pb: 2}}>
-					<TextureScreen liquid={item.texture?.textureType === 0} texture={item.texture} />
+					<TextureScreen liquid={item.texture?.textureType === 0} texture={item.texture}/>
 				</Stack>
 				<DialogContentText>
 					{item.description}
 				</DialogContentText>
 			</DialogContent>
+			{
+				user.isAdmin &&
+				<DialogActions>
+					<Button disabled={loading} sx={{mr: 1}} component={RouterLink} to={`/dashboard/elements/form?id=${item.id}`}
+					        variant="contained">
+						Modifier
+					</Button>
+					<LoadingButton loading={loading} disabled={loading} onClick={handleDelete} variant="contained" color="error">
+						Supprimer
+					</LoadingButton>
+				</DialogActions>
+			}
 		</Dialog>
 	</>
 }
 
 MoleculeItem.propTypes = {
-	item: PropTypes.object
+	item: PropTypes.object,
+	refresh: PropTypes.func,
 }
 
 export default function Elements() {
@@ -168,7 +226,9 @@ export default function Elements() {
 					</Typography>
 					<Atom>
 						{
-							separateElt.atom.sort((a, b) => a.atomicNumber - b.atomicNumber).map((i, k) => <AtomItem key={k} item={i}/>)
+							separateElt.atom.sort((a, b) => a.atomicNumber - b.atomicNumber).map((i, k) => <AtomItem key={k}
+							                                                                                         refresh={fetchAll}
+							                                                                                         item={i}/>)
 						}
 					</Atom>
 				</Stack>
@@ -178,7 +238,7 @@ export default function Elements() {
 					</Typography>
 					<Molecule>
 						{
-							separateElt.molecule.map((elt, k) => <MoleculeItem item={elt} key={k} />)
+							separateElt.molecule.map((elt, k) => <MoleculeItem refresh={fetchAll} item={elt} key={k}/>)
 						}
 					</Molecule>
 				</Stack>
